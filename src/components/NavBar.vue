@@ -16,7 +16,7 @@
           Tasks
         </router-link>
         <router-link to="/lists" class="nav-link" active-class="active">
-          Lists
+          To-do Lists
         </router-link>
         <router-link to="/sync" class="nav-link" active-class="active">
           Sync
@@ -113,8 +113,9 @@ const handleLogout = async () => {
 }
 
 .nav-link.active {
-  color: var(--color-primary);
+  color: var(--color-primary-dark);
   background-color: var(--color-primary-lighter);
+  font-weight: var(--font-weight-semibold);
 }
 
 .navbar-actions {

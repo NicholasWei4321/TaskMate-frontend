@@ -2,15 +2,18 @@
   <div class="tasks-page container">
     <div class="page-header">
       <div>
-        <h1>AI Prioritized Tasks</h1>
-        <p class="text-muted">Manage your tasks with AI-powered priority scoring</p>
+        <h1>Tasks</h1>
+        <p class="text-muted">
+          Manage your tasks with AI-powered priority scoring. Organize your tasks into to-do lists
+          <router-link to="/lists" class="inline-link">here</router-link>.
+        </p>
       </div>
       <button
         v-if="currentFilter === 'all' || currentFilter === 'active'"
         @click="openCreateModal"
         class="btn btn-primary create-task-btn"
       >
-        <span class="btn-icon">➕</span> Create Task
+        <span class="btn-icon">+</span> Create Task
       </button>
     </div>
 
@@ -63,7 +66,7 @@
         @click="openCreateModal"
         class="btn btn-primary create-task-btn"
       >
-        <span class="btn-icon">➕</span> Create Task
+        <span class="btn-icon">+</span> Create Task
       </button>
     </div>
 
@@ -122,7 +125,7 @@
       <div class="modal-content card" @click.stop>
         <div class="modal-header">
           <h2>Create New Task</h2>
-          <button @click="showCreateModal = false" class="close-btn">✕</button>
+          <button @click="showCreateModal = false" class="close-btn">×</button>
         </div>
 
         <form @submit.prevent="handleCreateTask" class="task-form">
@@ -198,7 +201,7 @@
       <div class="modal-content card" @click.stop>
         <div class="modal-header">
           <h2>Edit Task</h2>
-          <button @click="showEditModal = false" class="close-btn">✕</button>
+          <button @click="showEditModal = false" class="close-btn">×</button>
         </div>
 
         <form @submit.prevent="handleUpdateTask" class="task-form">
@@ -270,6 +273,29 @@
             />
           </div>
 
+          <div class="form-group">
+            <label>Custom Lists</label>
+            <div class="multi-select-container">
+              <div
+                v-for="list in customLists"
+                :key="list._id"
+                class="checkbox-item"
+              >
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    :value="list._id"
+                    v-model="editingTask.selectedLists"
+                  />
+                  <span>{{ list.name }}</span>
+                </label>
+              </div>
+              <div v-if="customLists.length === 0" class="text-muted text-sm">
+                No custom lists available. Default lists (Daily/Weekly/Monthly) are auto-managed.
+              </div>
+            </div>
+          </div>
+
           <div class="modal-actions">
             <button type="button" @click="showEditModal = false" class="btn btn-outline">
               Cancel
@@ -288,7 +314,7 @@
       <div class="modal-content card" @click.stop>
         <div class="modal-header">
           <h2>Snooze Task</h2>
-          <button @click="showSnoozeModal = false" class="close-btn">✕</button>
+          <button @click="showSnoozeModal = false" class="close-btn">×</button>
         </div>
 
         <form @submit.prevent="handleSnoozeTaskSubmit" class="task-form">
@@ -361,6 +387,8 @@ const editingTask = ref({
   inferredEffortHours: null,
   inferredImportance: null,
   inferredDifficulty: null,
+  selectedLists: [],
+  originalLists: [], // Track original lists for comparison
 });
 
 const snoozeTaskId = ref('');
@@ -453,6 +481,12 @@ const handleCreateTask = async () => {
 };
 
 const handleEditTask = (task) => {
+  // Find which custom lists contain this task
+  const listsContainingTask = listsStore.lists
+    .filter(list => !['Daily To-dos', 'Weekly To-dos', 'Monthly To-dos'].includes(list.name))
+    .filter(list => list.items && list.items.some(item => item.taskId === task._id))
+    .map(list => list._id);
+
   editingTask.value = {
     _id: task._id,
     name: task.name,
@@ -461,6 +495,8 @@ const handleEditTask = (task) => {
     inferredEffortHours: task.inferredEffortHours,
     inferredImportance: task.inferredImportance,
     inferredDifficulty: task.inferredDifficulty,
+    selectedLists: [...listsContainingTask], // Current list membership
+    originalLists: [...listsContainingTask], // Store original for comparison
   };
   showEditModal.value = true;
 };
@@ -477,6 +513,31 @@ const handleUpdateTask = async () => {
   );
 
   if (result) {
+    const taskId = editingTask.value._id;
+    const originalLists = editingTask.value.originalLists;
+    const selectedLists = editingTask.value.selectedLists;
+
+    // Find lists to add (in selectedLists but not in originalLists)
+    const listsToAdd = selectedLists.filter(listId => !originalLists.includes(listId));
+
+    // Find lists to remove (in originalLists but not in selectedLists)
+    const listsToRemove = originalLists.filter(listId => !selectedLists.includes(listId));
+
+    // Add task to new lists
+    for (const listId of listsToAdd) {
+      await listsStore.addListItem(listId, taskId, editingTask.value.dueDate);
+    }
+
+    // Remove task from old lists
+    for (const listId of listsToRemove) {
+      await listsStore.removeListItem(listId, taskId);
+    }
+
+    // Refresh lists if any changes were made
+    if (listsToAdd.length > 0 || listsToRemove.length > 0) {
+      await listsStore.fetchLists();
+    }
+
     showEditModal.value = false;
   }
 };
@@ -530,6 +591,18 @@ onMounted(async () => {
 
 .page-header h1 {
   margin-bottom: var(--spacing-sm);
+}
+
+.inline-link {
+  color: var(--color-primary);
+  text-decoration: none;
+  font-weight: var(--font-weight-medium);
+  transition: var(--transition-fast);
+}
+
+.inline-link:hover {
+  color: var(--color-primary-dark);
+  text-decoration: underline;
 }
 
 .create-task-btn .btn-icon {

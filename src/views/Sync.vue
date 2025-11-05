@@ -6,7 +6,7 @@
         <p class="text-muted">Connect and sync assignments from external platforms</p>
       </div>
       <button @click="showConnectModal = true" class="btn btn-primary">
-        ➕ Connect Source
+        + Connect Source
       </button>
     </div>
 
@@ -20,7 +20,7 @@
     </div>
 
     <div v-else-if="syncStore.sources.length === 0" class="empty-state card">
-      <div class="empty-icon">🔄</div>
+      <div class="empty-icon">↻</div>
       <h2>No Sources Connected</h2>
       <p class="text-muted">
         Connect external platforms like Canvas or GitHub to automatically import assignments
@@ -69,14 +69,14 @@
             :disabled="syncStore.syncing"
           >
             <span v-if="syncStore.syncing" class="loading"></span>
-            <span v-else>🔄 Sync Now</span>
+            <span v-else>↻ Sync Now</span>
           </button>
           <button
             @click="confirmDisconnect(source._id)"
-            class="btn btn-outline btn-danger"
+            class="btn btn-danger"
             :disabled="syncStore.syncing"
           >
-            Disconnect
+            × Disconnect
           </button>
         </div>
       </div>
@@ -87,7 +87,7 @@
       <div class="modal-content card" @click.stop>
         <div class="modal-header">
           <h2>Connect External Source</h2>
-          <button @click="showConnectModal = false" class="close-btn">✕</button>
+          <button @click="showConnectModal = false" class="close-btn">×</button>
         </div>
 
         <form @submit.prevent="handleConnect" class="connect-form">
@@ -190,11 +190,11 @@ const newSource = ref({
 
 const getSourceIcon = (sourceType) => {
   const icons = {
-    Canvas: '📚',
-    GitHub: '💻',
-    Gradescope: '📝',
+    Canvas: 'C',
+    GitHub: 'G',
+    Gradescope: 'S',
   };
-  return icons[sourceType] || '🔗';
+  return icons[sourceType] || '◉';
 };
 
 const formatDate = (date) => {
@@ -496,12 +496,14 @@ onMounted(async () => {
 }
 
 .btn-danger {
-  color: var(--color-error);
-  border-color: var(--color-error);
+  background-color: var(--color-error);
+  color: white;
+  border: none;
 }
 
 .btn-danger:hover:not(:disabled) {
-  background-color: var(--color-error-light);
+  background-color: var(--color-error-dark, #c92a2a);
+  opacity: 0.9;
 }
 
 @media (max-width: 768px) {

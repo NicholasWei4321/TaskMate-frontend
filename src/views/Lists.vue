@@ -2,11 +2,11 @@
   <div class="lists-page container">
     <div class="page-header">
       <div>
-        <h1>Todo Lists</h1>
+        <h1>To-do Lists</h1>
         <p class="text-muted">Organize tasks into time-scoped collections</p>
       </div>
       <button @click="showCreateModal = true" class="btn btn-primary">
-        ➕ Create List
+        + Create List
       </button>
     </div>
 
@@ -78,7 +78,7 @@
       <div class="modal-content card" @click.stop>
         <div class="modal-header">
           <h2>Create New List</h2>
-          <button @click="showCreateModal = false" class="close-btn">✕</button>
+          <button @click="showCreateModal = false" class="close-btn">×</button>
         </div>
 
         <form @submit.prevent="handleCreateList" class="list-form">
@@ -172,7 +172,7 @@
       <div class="modal-content card" @click.stop>
         <div class="modal-header">
           <h2>Edit List</h2>
-          <button @click="showEditModal = false" class="close-btn">✕</button>
+          <button @click="showEditModal = false" class="close-btn">×</button>
         </div>
 
         <form @submit.prevent="handleUpdateList" class="list-form">
@@ -243,7 +243,7 @@
       <div class="modal-content card modal-large" @click.stop>
         <div class="modal-header">
           <h2>{{ selectedList?.name }}</h2>
-          <button @click="showDetailModal = false" class="close-btn">✕</button>
+          <button @click="showDetailModal = false" class="close-btn">×</button>
         </div>
 
         <div v-if="selectedList" class="list-detail">

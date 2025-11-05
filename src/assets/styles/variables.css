@@ -1,55 +1,63 @@
 /* Design System - Color Palette and Variables */
 
 :root {
-  /* Primary Colors - Professional Blue */
-  --color-primary: #2563eb;
-  --color-primary-dark: #1e40af;
-  --color-primary-light: #60a5fa;
-  --color-primary-lighter: #dbeafe;
+  /* Base Palette Colors */
+  --carolina-blue: #87bcde;
+  --chinese-violet: #805e73;
+  --davys-gray: #4e4d5c;
+  --charcoal: #2d4654;
+  --charcoal-2: #243b4a;
 
-  /* Secondary Colors - Accent Purple */
-  --color-secondary: #7c3aed;
-  --color-secondary-dark: #5b21b6;
-  --color-secondary-light: #a78bfa;
+  /* Primary Colors - Carolina Blue */
+  --color-primary: #87bcde;
+  --color-primary-dark: #5a9cc4;
+  --color-primary-light: #a8cee8;
+  --color-primary-lighter: #d4e7f3;
 
-  /* Success, Warning, Error */
-  --color-success: #10b981;
-  --color-success-light: #d1fae5;
-  --color-warning: #f59e0b;
-  --color-warning-light: #fef3c7;
-  --color-error: #ef4444;
-  --color-error-light: #fee2e2;
+  /* Secondary Colors - Chinese Violet */
+  --color-secondary: #805e73;
+  --color-secondary-dark: #5d4454;
+  --color-secondary-light: #a38899;
 
-  /* Neutral Colors */
+  /* Success, Warning, Error - Adjusted to complement palette */
+  --color-success: #6ca58f;
+  --color-success-light: #d4e8df;
+  --color-warning: #d4a574;
+  --color-warning-light: #f3e5d4;
+  --color-error: #c76d6d;
+  --color-error-light: #f0d9d9;
+
+  /* Neutral Colors - Based on palette */
   --color-white: #ffffff;
-  --color-gray-50: #f9fafb;
-  --color-gray-100: #f3f4f6;
-  --color-gray-200: #e5e7eb;
-  --color-gray-300: #d1d5db;
-  --color-gray-400: #9ca3af;
-  --color-gray-500: #6b7280;
-  --color-gray-600: #4b5563;
-  --color-gray-700: #374151;
-  --color-gray-800: #1f2937;
-  --color-gray-900: #111827;
-  --color-black: #000000;
+  --color-gray-50: #f5f6f7;
+  --color-gray-100: #e8eaec;
+  --color-gray-200: #d1d4d8;
+  --color-gray-300: #b0b5bc;
+  --color-gray-400: #898e96;
+  --color-gray-500: #6b7179;
+  --color-gray-600: #4e4d5c;
+  --color-gray-700: #3d3e4a;
+  --color-gray-800: #2d4654;
+  --color-gray-900: #243b4a;
+  --color-black: #1a2630;
 
   /* Text Colors */
-  --color-text-primary: var(--color-gray-900);
-  --color-text-secondary: var(--color-gray-600);
-  --color-text-muted: var(--color-gray-500);
+  --color-text-primary: #2d4654;
+  --color-text-secondary: #4e4d5c;
+  --color-text-muted: #6b7179;
   --color-text-inverse: var(--color-white);
 
   /* Background Colors */
   --color-bg-primary: var(--color-white);
-  --color-bg-secondary: var(--color-gray-50);
-  --color-bg-tertiary: var(--color-gray-100);
+  --color-bg-secondary: #e8eef2;
+  --color-bg-tertiary: #d4dce3;
 
   /* Border Colors */
-  --color-border: var(--color-gray-200);
-  --color-border-dark: var(--color-gray-300);
+  --color-border: #d1d4d8;
+  --color-border-dark: #b0b5bc;
 
   /* Typography */
+  --font-family-headings: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 
@@ -109,4 +117,4 @@
 }
 
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
