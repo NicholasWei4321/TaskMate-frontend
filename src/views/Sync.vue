@@ -163,7 +163,8 @@
         </div>
         <h2 class="text-center">Syncing Assignments...</h2>
         <p class="text-center text-muted">
-          Please wait while we fetch and import your assignments
+          Please wait while we fetch and import your assignments.<br>
+          This may take a while.
         </p>
       </div>
     </div>

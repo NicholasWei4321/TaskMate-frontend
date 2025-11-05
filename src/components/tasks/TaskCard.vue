@@ -1,5 +1,5 @@
 <template>
-  <div class="task-card card" :class="{ 'task-overdue': task.overdue }">
+  <div class="task-card card" :class="{ 'task-overdue': task.overdue && !task.completed }">
     <div class="task-header">
       <div class="task-info">
         <h3 class="task-name">{{ task.name }}</h3>
@@ -7,8 +7,8 @@
           {{ task.description }}
         </p>
       </div>
-      <div class="task-priority">
-        <span v-if="task.overdue" class="priority-badge badge badge-error">
+      <div v-if="showPriority" class="task-priority">
+        <span v-if="task.overdue && !task.completed" class="priority-badge badge badge-error">
           Overdue
         </span>
         <span v-else class="priority-badge badge" :class="priorityClass">
@@ -20,7 +20,7 @@
     <div class="task-meta">
       <div class="meta-item">
         <span class="meta-label">Due:</span>
-        <span class="meta-value" :class="{ 'text-error': task.overdue }">
+        <span class="meta-value" :class="{ 'text-error': task.overdue && !task.completed }">
           {{ formatDate(task.dueDate) }}
         </span>
       </div>
@@ -78,6 +78,10 @@ const props = defineProps({
   priorityRank: {
     type: Number,
     default: 0,
+  },
+  showPriority: {
+    type: Boolean,
+    default: true,
   },
 });
 

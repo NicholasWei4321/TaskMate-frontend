@@ -80,14 +80,68 @@
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
+import { useListsStore } from '../stores/lists';
 
 const router = useRouter();
 const authStore = useAuthStore();
+const listsStore = useListsStore();
 
 const username = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const localError = ref('');
+
+const createDefaultLists = async () => {
+  const now = new Date();
+
+  // Daily To-dos: Today from 00:00 to 23:59
+  const todayStart = new Date(now);
+  todayStart.setHours(0, 0, 0, 0);
+  const todayEnd = new Date(now);
+  todayEnd.setHours(23, 59, 59, 999);
+
+  await listsStore.createList(
+    'Daily To-dos',
+    todayStart.toISOString(),
+    todayEnd.toISOString(),
+    true, // auto-clear completed
+    'daily'
+  );
+
+  // Weekly To-dos: Current week (Monday to Sunday)
+  const weekStart = new Date(now);
+  const dayOfWeek = weekStart.getDay();
+  const diff = dayOfWeek === 0 ? -6 : 1 - dayOfWeek; // Adjust to Monday
+  weekStart.setDate(weekStart.getDate() + diff);
+  weekStart.setHours(0, 0, 0, 0);
+
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekStart.getDate() + 6); // Sunday
+  weekEnd.setHours(23, 59, 59, 999);
+
+  await listsStore.createList(
+    'Weekly To-dos',
+    weekStart.toISOString(),
+    weekEnd.toISOString(),
+    true, // auto-clear completed
+    'weekly'
+  );
+
+  // Monthly To-dos: Current month
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  monthStart.setHours(0, 0, 0, 0);
+
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0); // Last day of month
+  monthEnd.setHours(23, 59, 59, 999);
+
+  await listsStore.createList(
+    'Monthly To-dos',
+    monthStart.toISOString(),
+    monthEnd.toISOString(),
+    true, // auto-clear completed
+    'monthly'
+  );
+};
 
 const handleRegister = async () => {
   localError.value = '';
@@ -99,6 +153,8 @@ const handleRegister = async () => {
 
   const success = await authStore.register(username.value, password.value);
   if (success) {
+    // Create default lists for new user
+    await createDefaultLists();
     router.push('/dashboard');
   }
 };

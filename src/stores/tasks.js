@@ -50,7 +50,7 @@ export const useTasksStore = defineStore('tasks', {
       }
     },
 
-    async updateTask(taskId, newName, newDescription, newDueDate) {
+    async updateTask(taskId, newName, newDescription, newDueDate, newEffort, newImportance, newDifficulty) {
       this.loading = true;
       this.error = null;
       try {
@@ -58,7 +58,10 @@ export const useTasksStore = defineStore('tasks', {
           taskId,
           newName,
           newDescription,
-          newDueDate
+          newDueDate,
+          newEffort,
+          newImportance,
+          newDifficulty
         );
         if (result.error) {
           this.error = result.error;

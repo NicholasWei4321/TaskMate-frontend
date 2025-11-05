@@ -54,6 +54,18 @@ export const listsAPI = {
     return response.data;
   },
 
+  async updateList(list, newName, newStartTime, newEndTime, newAutoClearCompleted, newRecurrenceType) {
+    const response = await apiClient.post('/TodoList/updateList', {
+      list,
+      newName,
+      newStartTime: newStartTime ? new Date(newStartTime).toISOString() : undefined,
+      newEndTime: newEndTime ? new Date(newEndTime).toISOString() : undefined,
+      newAutoClearCompleted,
+      newRecurrenceType,
+    });
+    return response.data;
+  },
+
   async updateListSettings(list, autoClearCompleted, recurrenceType) {
     const response = await apiClient.post('/TodoList/updateListSettings', {
       list,

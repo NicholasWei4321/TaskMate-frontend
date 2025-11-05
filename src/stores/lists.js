@@ -145,6 +145,32 @@ export const useListsStore = defineStore('lists', {
       }
     },
 
+    async updateList(listId, newName, newStartTime, newEndTime, newAutoClearCompleted, newRecurrenceType) {
+      this.loading = true;
+      this.error = null;
+      try {
+        const result = await listsAPI.updateList(
+          listId,
+          newName,
+          newStartTime,
+          newEndTime,
+          newAutoClearCompleted,
+          newRecurrenceType
+        );
+        if (result.error) {
+          this.error = result.error;
+          return null;
+        }
+        await this.fetchLists();
+        return result.list;
+      } catch (error) {
+        this.error = error.message || 'Failed to update list';
+        return null;
+      } finally {
+        this.loading = false;
+      }
+    },
+
     async updateListSettings(listId, autoClearCompleted, recurrenceType) {
       this.loading = true;
       this.error = null;

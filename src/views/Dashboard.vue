@@ -71,6 +71,8 @@
             :task="task"
             :priority-rank="index + 1"
             @complete="handleCompleteTask"
+            @edit="handleEditTask"
+            @snooze="handleSnoozeTask"
           />
         </div>
       </div>
@@ -107,17 +109,172 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Task Modal -->
+    <div v-if="showEditModal" class="modal-overlay" @click="showEditModal = false">
+      <div class="modal-content card" @click.stop>
+        <div class="modal-header">
+          <h2>Edit Task</h2>
+          <button @click="showEditModal = false" class="close-btn">✕</button>
+        </div>
+
+        <form @submit.prevent="handleUpdateTask" class="task-form">
+          <div class="form-group">
+            <label for="editTaskName">Task Name *</label>
+            <input
+              id="editTaskName"
+              v-model="editingTask.name"
+              type="text"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskDescription">Description</label>
+            <textarea
+              id="editTaskDescription"
+              v-model="editingTask.description"
+              rows="3"
+            ></textarea>
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskDueDate">Due Date *</label>
+            <input
+              id="editTaskDueDate"
+              v-model="editingTask.dueDate"
+              type="datetime-local"
+              required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskEffort">Estimated Effort (hours)</label>
+            <input
+              id="editTaskEffort"
+              v-model.number="editingTask.inferredEffortHours"
+              type="number"
+              min="0.5"
+              max="40"
+              step="0.5"
+              placeholder="0.5 - 40 hours"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskImportance">Importance (1-10)</label>
+            <input
+              id="editTaskImportance"
+              v-model.number="editingTask.inferredImportance"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              placeholder="1 - 10"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskDifficulty">Difficulty (1-10)</label>
+            <input
+              id="editTaskDifficulty"
+              v-model.number="editingTask.inferredDifficulty"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              placeholder="1 - 10"
+            />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" @click="showEditModal = false" class="btn btn-outline">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" :disabled="tasksStore.loading">
+              <span v-if="tasksStore.loading" class="loading"></span>
+              <span v-else>Update Task</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Snooze Task Modal -->
+    <div v-if="showSnoozeModal" class="modal-overlay" @click="showSnoozeModal = false">
+      <div class="modal-content card" @click.stop>
+        <div class="modal-header">
+          <h2>Snooze Task</h2>
+          <button @click="showSnoozeModal = false" class="close-btn">✕</button>
+        </div>
+
+        <form @submit.prevent="handleSnoozeTaskSubmit" class="task-form">
+          <div class="form-group">
+            <label for="snoozeDate">New Due Date *</label>
+            <input
+              id="snoozeDate"
+              v-model="snoozeDate"
+              type="datetime-local"
+              required
+            />
+          </div>
+
+          <div class="quick-snooze">
+            <p class="text-sm text-muted">Quick snooze:</p>
+            <div class="quick-snooze-buttons">
+              <button type="button" @click="quickSnooze(1)" class="btn btn-sm btn-outline">
+                +1 Day
+              </button>
+              <button type="button" @click="quickSnooze(3)" class="btn btn-sm btn-outline">
+                +3 Days
+              </button>
+              <button type="button" @click="quickSnooze(7)" class="btn btn-sm btn-outline">
+                +1 Week
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" @click="showSnoozeModal = false" class="btn btn-outline">
+              Cancel
+            </button>
+            <button type="submit" class="btn btn-primary" :disabled="tasksStore.loading">
+              <span v-if="tasksStore.loading" class="loading"></span>
+              <span v-else>Snooze Task</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useRouter } from 'vue-router';
 import { useTasksStore } from '../stores/tasks';
 import { useListsStore } from '../stores/lists';
 import TaskCard from '../components/tasks/TaskCard.vue';
 
+const router = useRouter();
 const tasksStore = useTasksStore();
 const listsStore = useListsStore();
+
+const showEditModal = ref(false);
+const showSnoozeModal = ref(false);
+
+const editingTask = ref({
+  _id: '',
+  name: '',
+  description: '',
+  dueDate: '',
+  inferredEffortHours: null,
+  inferredImportance: null,
+  inferredDifficulty: null,
+});
+
+const snoozeTaskId = ref('');
+const snoozeDate = ref('');
 
 const topPriorityTasks = computed(() => {
   return tasksStore.prioritizedTasks.slice(0, 5);
@@ -125,6 +282,56 @@ const topPriorityTasks = computed(() => {
 
 const handleCompleteTask = async (taskId) => {
   await tasksStore.completeTask(taskId);
+};
+
+const handleEditTask = (task) => {
+  editingTask.value = {
+    _id: task._id,
+    name: task.name,
+    description: task.description,
+    dueDate: new Date(task.dueDate).toISOString().slice(0, 16),
+    inferredEffortHours: task.inferredEffortHours,
+    inferredImportance: task.inferredImportance,
+    inferredDifficulty: task.inferredDifficulty,
+  };
+  showEditModal.value = true;
+};
+
+const handleUpdateTask = async () => {
+  const result = await tasksStore.updateTask(
+    editingTask.value._id,
+    editingTask.value.name,
+    editingTask.value.description,
+    editingTask.value.dueDate,
+    editingTask.value.inferredEffortHours,
+    editingTask.value.inferredImportance,
+    editingTask.value.inferredDifficulty
+  );
+
+  if (result) {
+    showEditModal.value = false;
+  }
+};
+
+const handleSnoozeTask = (taskId) => {
+  snoozeTaskId.value = taskId;
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  snoozeDate.value = tomorrow.toISOString().slice(0, 16);
+  showSnoozeModal.value = true;
+};
+
+const handleSnoozeTaskSubmit = async () => {
+  const result = await tasksStore.snoozeTask(snoozeTaskId.value, snoozeDate.value);
+  if (result) {
+    showSnoozeModal.value = false;
+  }
+};
+
+const quickSnooze = (days) => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  snoozeDate.value = date.toISOString().slice(0, 16);
 };
 
 onMounted(async () => {
@@ -276,5 +483,96 @@ onMounted(async () => {
   .dashboard-content {
     grid-template-columns: 1fr;
   }
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--spacing-md);
+}
+
+.modal-content {
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.modal-header h2 {
+  margin-bottom: 0;
+}
+
+.close-btn {
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  background-color: transparent;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-fast);
+}
+
+.close-btn:hover {
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.task-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-lg);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.form-group label {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.quick-snooze {
+  padding: var(--spacing-md);
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-md);
+}
+
+.quick-snooze p {
+  margin-bottom: var(--spacing-sm);
+}
+
+.quick-snooze-buttons {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-md);
 }
 </style>

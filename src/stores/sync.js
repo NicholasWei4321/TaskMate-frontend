@@ -3,6 +3,7 @@ import { defineStore } from 'pinia';
 import { syncAPI } from '../api/sync';
 import { useAuthStore } from './auth';
 import { useTasksStore } from './tasks';
+import { useListsStore } from './lists';
 
 export const useSyncStore = defineStore('sync', {
   state: () => ({
@@ -10,6 +11,7 @@ export const useSyncStore = defineStore('sync', {
     syncing: false,
     loading: false,
     error: null,
+    autoSyncInterval: null,
   }),
 
   actions: {
@@ -29,6 +31,12 @@ export const useSyncStore = defineStore('sync', {
           return null;
         }
         await this.fetchSources();
+
+        // Sync immediately after connecting a new source
+        if (result.sourceAccount) {
+          await this.syncSource(result.sourceAccount);
+        }
+
         return result.sourceAccount;
       } catch (error) {
         this.error = error.message || 'Failed to connect source';
@@ -62,8 +70,12 @@ export const useSyncStore = defineStore('sync', {
       this.error = null;
       const authStore = useAuthStore();
       const tasksStore = useTasksStore();
+      const listsStore = useListsStore();
 
       try {
+        // Fetch lists to ensure we have the latest default lists
+        await listsStore.fetchLists();
+
         // Poll external source for assignments
         const pollResult = await syncAPI.pollExternalSource(sourceAccountId);
         if (pollResult.error) {
@@ -104,17 +116,42 @@ export const useSyncStore = defineStore('sync', {
             );
 
             if (newTask) {
+              const taskId = newTask; // newTask is the task ID string
+              const taskDueDate = new Date(assignment.details.dueDate);
+              const now = new Date();
+
+              // Only add to default lists if task is upcoming (not overdue)
+              if (taskDueDate >= now) {
+                // Get default lists
+                const defaultLists = listsStore.lists.filter(list =>
+                  ['Daily To-dos', 'Weekly To-dos', 'Monthly To-dos'].includes(list.name)
+                );
+
+                // Check each default list and add if due date falls within range
+                for (const list of defaultLists) {
+                  const listStart = new Date(list.startTime);
+                  const listEnd = new Date(list.endTime);
+
+                  // Check if task due date falls within the list's time range
+                  if (taskDueDate >= listStart && taskDueDate <= listEnd) {
+                    await listsStore.addListItem(list._id, taskId, assignment.details.dueDate);
+                  }
+                }
+              }
+
               // Record the sync
               await syncAPI.recordInternalSync(
                 sourceAccountId,
                 assignment.externalId,
-                newTask._id,
+                taskId,
                 assignment.externalModificationTimestamp
               );
             }
           }
         }
 
+        // Refresh lists to update the UI with newly added items
+        await listsStore.fetchLists();
         await this.fetchSources();
         return true;
       } catch (error) {
@@ -152,6 +189,39 @@ export const useSyncStore = defineStore('sync', {
       } catch (error) {
         console.error('Get assignments error:', error);
         return [];
+      }
+    },
+
+    async syncAllSources() {
+      // Sync all connected sources silently in the background
+      if (this.sources.length === 0) return;
+
+      for (const source of this.sources) {
+        try {
+          await this.syncSource(source._id);
+        } catch (error) {
+          console.error(`Failed to sync source ${source.sourceName}:`, error);
+          // Continue with other sources even if one fails
+        }
+      }
+    },
+
+    startAutoSync() {
+      // Clear any existing interval
+      if (this.autoSyncInterval) {
+        clearInterval(this.autoSyncInterval);
+      }
+
+      // Sync all sources every hour (3600000 ms)
+      this.autoSyncInterval = setInterval(() => {
+        this.syncAllSources();
+      }, 3600000); // 1 hour
+    },
+
+    stopAutoSync() {
+      if (this.autoSyncInterval) {
+        clearInterval(this.autoSyncInterval);
+        this.autoSyncInterval = null;
       }
     },
   },

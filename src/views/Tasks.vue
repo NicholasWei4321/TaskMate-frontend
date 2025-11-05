@@ -8,9 +8,9 @@
       <button
         v-if="currentFilter === 'all' || currentFilter === 'active'"
         @click="openCreateModal"
-        class="btn btn-primary"
+        class="btn btn-primary create-task-btn"
       >
-        ➕ Create Task
+        <span class="btn-icon">➕</span> Create Task
       </button>
     </div>
 
@@ -61,22 +61,60 @@
       <button
         v-if="currentFilter === 'all' || currentFilter === 'active'"
         @click="openCreateModal"
-        class="btn btn-primary"
+        class="btn btn-primary create-task-btn"
       >
-        Create Task
+        <span class="btn-icon">➕</span> Create Task
       </button>
     </div>
 
     <div v-else class="tasks-list">
-      <TaskCard
-        v-for="(task, index) in filteredTasks"
-        :key="task._id"
-        :task="task"
-        :priority-rank="index + 1"
-        @complete="handleCompleteTask"
-        @edit="handleEditTask"
-        @snooze="handleSnoozeTask"
-      />
+      <!-- Show sections for "All Tasks" filter -->
+      <template v-if="currentFilter === 'all'">
+        <div v-if="activeTasks.length > 0">
+          <h2 class="section-header">Active Tasks</h2>
+          <div class="tasks-section">
+            <TaskCard
+              v-for="(task, index) in activeTasks"
+              :key="task._id"
+              :task="task"
+              :priority-rank="index + 1"
+              @complete="handleCompleteTask"
+              @edit="handleEditTask"
+              @snooze="handleSnoozeTask"
+            />
+          </div>
+        </div>
+
+        <div v-if="completedTasksInAll.length > 0" :class="{ 'section-spacer': activeTasks.length > 0 }">
+          <h2 class="section-header">Completed Tasks</h2>
+          <div class="tasks-section">
+            <TaskCard
+              v-for="task in completedTasksInAll"
+              :key="task._id"
+              :task="task"
+              :priority-rank="0"
+              :show-priority="false"
+              @complete="handleCompleteTask"
+              @edit="handleEditTask"
+              @snooze="handleSnoozeTask"
+            />
+          </div>
+        </div>
+      </template>
+
+      <!-- For other filters, show regular list -->
+      <template v-else>
+        <TaskCard
+          v-for="(task, index) in filteredTasks"
+          :key="task._id"
+          :task="task"
+          :priority-rank="index + 1"
+          :show-priority="currentFilter !== 'completed'"
+          @complete="handleCompleteTask"
+          @edit="handleEditTask"
+          @snooze="handleSnoozeTask"
+        />
+      </template>
     </div>
 
     <!-- Create Task Modal -->
@@ -117,6 +155,29 @@
               type="datetime-local"
               required
             />
+          </div>
+
+          <div class="form-group">
+            <label>Add to Custom Lists (optional)</label>
+            <div class="multi-select-container">
+              <div
+                v-for="list in customLists"
+                :key="list._id"
+                class="checkbox-item"
+              >
+                <label class="checkbox-label">
+                  <input
+                    type="checkbox"
+                    :value="list._id"
+                    v-model="newTask.selectedLists"
+                  />
+                  <span>{{ list.name }}</span>
+                </label>
+              </div>
+              <div v-if="customLists.length === 0" class="text-muted text-sm">
+                No custom lists available. Tasks will be auto-added to Daily/Weekly/Monthly lists.
+              </div>
+            </div>
           </div>
 
           <div class="modal-actions">
@@ -167,6 +228,45 @@
               v-model="editingTask.dueDate"
               type="datetime-local"
               required
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskEffort">Estimated Effort (hours)</label>
+            <input
+              id="editTaskEffort"
+              v-model.number="editingTask.inferredEffortHours"
+              type="number"
+              min="0.5"
+              max="40"
+              step="0.5"
+              placeholder="0.5 - 40 hours"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskImportance">Importance (1-10)</label>
+            <input
+              id="editTaskImportance"
+              v-model.number="editingTask.inferredImportance"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              placeholder="1 - 10"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="editTaskDifficulty">Difficulty (1-10)</label>
+            <input
+              id="editTaskDifficulty"
+              v-model.number="editingTask.inferredDifficulty"
+              type="number"
+              min="1"
+              max="10"
+              step="1"
+              placeholder="1 - 10"
             />
           </div>
 
@@ -235,9 +335,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useTasksStore } from '../stores/tasks';
+import { useListsStore } from '../stores/lists';
 import TaskCard from '../components/tasks/TaskCard.vue';
 
 const tasksStore = useTasksStore();
+const listsStore = useListsStore();
 
 const currentFilter = ref('active');
 const showCreateModal = ref(false);
@@ -248,6 +350,7 @@ const newTask = ref({
   name: '',
   description: '',
   dueDate: '',
+  selectedLists: [],
 });
 
 const editingTask = ref({
@@ -255,6 +358,9 @@ const editingTask = ref({
   name: '',
   description: '',
   dueDate: '',
+  inferredEffortHours: null,
+  inferredImportance: null,
+  inferredDifficulty: null,
 });
 
 const snoozeTaskId = ref('');
@@ -273,10 +379,28 @@ const filteredTasks = computed(() => {
   }
 });
 
+const activeTasks = computed(() => {
+  return tasksStore.prioritizedTasks;
+});
+
+const completedTasksInAll = computed(() => {
+  return tasksStore.completedTasks;
+});
+
+const customLists = computed(() => {
+  // Filter out default lists (Daily/Weekly/Monthly To-dos)
+  return listsStore.lists.filter(list =>
+    !['Daily To-dos', 'Weekly To-dos', 'Monthly To-dos'].includes(list.name)
+  );
+});
+
 const getDefaultDueDate = () => {
   const today = new Date();
-  today.setHours(23, 59, 0, 0); // Set to 11:59 PM
-  return today.toISOString().slice(0, 16); // Format for datetime-local input
+  // Get the local date and set to 11:59 PM in local time
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}T23:59`; // Format for datetime-local input
 };
 
 const openCreateModal = () => {
@@ -292,8 +416,39 @@ const handleCreateTask = async () => {
   );
 
   if (result) {
+    const taskId = result; // result is already the task ID (string), not an object
+    const taskDueDate = new Date(newTask.value.dueDate);
+
+    // Auto-add to default Daily/Weekly/Monthly lists if applicable
+    const defaultLists = listsStore.lists.filter(list =>
+      ['Daily To-dos', 'Weekly To-dos', 'Monthly To-dos'].includes(list.name)
+    );
+
+    for (const list of defaultLists) {
+      const listStart = new Date(list.startTime);
+      const listEnd = new Date(list.endTime);
+
+      // Check if task due date falls within the list's time range
+      if (taskDueDate >= listStart && taskDueDate <= listEnd) {
+        await listsStore.addListItem(list._id, taskId, newTask.value.dueDate);
+      }
+    }
+
+    // Add task to selected custom lists
+    if (newTask.value.selectedLists.length > 0) {
+      for (const listId of newTask.value.selectedLists) {
+        await listsStore.addListItem(listId, taskId, newTask.value.dueDate);
+      }
+    }
+
+    // Refresh lists to ensure newly added items are in the store
+    await listsStore.fetchLists();
+
+    // Refresh tasks to ensure newly created task is in the store
+    await tasksStore.fetchTasks();
+
     showCreateModal.value = false;
-    newTask.value = { name: '', description: '', dueDate: '' };
+    newTask.value = { name: '', description: '', dueDate: '', selectedLists: [] };
   }
 };
 
@@ -303,6 +458,9 @@ const handleEditTask = (task) => {
     name: task.name,
     description: task.description,
     dueDate: new Date(task.dueDate).toISOString().slice(0, 16),
+    inferredEffortHours: task.inferredEffortHours,
+    inferredImportance: task.inferredImportance,
+    inferredDifficulty: task.inferredDifficulty,
   };
   showEditModal.value = true;
 };
@@ -312,7 +470,10 @@ const handleUpdateTask = async () => {
     editingTask.value._id,
     editingTask.value.name,
     editingTask.value.description,
-    editingTask.value.dueDate
+    editingTask.value.dueDate,
+    editingTask.value.inferredEffortHours,
+    editingTask.value.inferredImportance,
+    editingTask.value.inferredDifficulty
   );
 
   if (result) {
@@ -346,7 +507,10 @@ const quickSnooze = (days) => {
 };
 
 onMounted(async () => {
-  await tasksStore.fetchTasks();
+  await Promise.all([
+    tasksStore.fetchTasks(),
+    listsStore.fetchLists(),
+  ]);
 });
 </script>
 
@@ -366,6 +530,11 @@ onMounted(async () => {
 
 .page-header h1 {
   margin-bottom: var(--spacing-sm);
+}
+
+.create-task-btn .btn-icon {
+  color: var(--color-white);
+  filter: none;
 }
 
 .tasks-filters {
@@ -420,6 +589,55 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   gap: var(--spacing-md);
+}
+
+.section-header {
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  border-bottom: 2px solid var(--color-border);
+}
+
+.tasks-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+}
+
+.section-spacer {
+  margin-top: var(--spacing-xl);
+}
+
+.multi-select-container {
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  background-color: var(--color-bg-secondary);
+}
+
+.checkbox-item {
+  padding: var(--spacing-xs) var(--spacing-sm);
+}
+
+.checkbox-item:hover {
+  background-color: var(--color-white);
+  border-radius: var(--radius-sm);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  cursor: pointer;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: auto;
+  cursor: pointer;
 }
 
 /* Modal Styles */

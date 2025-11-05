@@ -12,12 +12,15 @@ export const tasksAPI = {
     return response.data;
   },
 
-  async updateTask(task, newName, newDescription, newDueDate) {
+  async updateTask(task, newName, newDescription, newDueDate, newEffort, newImportance, newDifficulty) {
     const response = await apiClient.post('/AIPrioritizedTask/updateTask', {
       task,
       newName,
       newDescription,
       newDueDate: newDueDate ? new Date(newDueDate).toISOString() : undefined,
+      newEffort,
+      newImportance,
+      newDifficulty,
     });
     return response.data;
   },

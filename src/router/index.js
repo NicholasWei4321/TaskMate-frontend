@@ -8,6 +8,7 @@ const Register = () => import('../views/Register.vue');
 const Dashboard = () => import('../views/Dashboard.vue');
 const Tasks = () => import('../views/Tasks.vue');
 const Lists = () => import('../views/Lists.vue');
+const ListDetail = () => import('../views/ListDetail.vue');
 const Sync = () => import('../views/Sync.vue');
 
 const routes = [
@@ -43,6 +44,12 @@ const routes = [
     path: '/lists',
     name: 'Lists',
     component: Lists,
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/lists/:id',
+    name: 'ListDetail',
+    component: ListDetail,
     meta: { requiresAuth: true },
   },
   {
