@@ -8,8 +8,11 @@
         </p>
       </div>
       <div class="task-priority">
-        <span class="priority-badge badge" :class="priorityClass">
-          Priority: {{ Math.round(task.priorityScore) }}
+        <span v-if="task.overdue" class="priority-badge badge badge-error">
+          Overdue
+        </span>
+        <span v-else class="priority-badge badge" :class="priorityClass">
+          Priority #{{ priorityRank }}
         </span>
       </div>
     </div>
@@ -61,10 +64,6 @@
     <div v-else class="task-completed-badge">
       <span class="badge badge-success">✓ Completed</span>
     </div>
-
-    <div v-if="task.overdue" class="overdue-badge">
-      Overdue
-    </div>
   </div>
 </template>
 
@@ -75,6 +74,10 @@ const props = defineProps({
   task: {
     type: Object,
     required: true,
+  },
+  priorityRank: {
+    type: Number,
+    default: 0,
   },
 });
 
@@ -183,20 +186,6 @@ const formatDate = (date) => {
   display: flex;
   align-items: center;
   padding: var(--spacing-sm) 0;
-}
-
-.overdue-badge {
-  position: absolute;
-  top: var(--spacing-md);
-  right: var(--spacing-md);
-  background-color: var(--color-error);
-  color: var(--color-white);
-  padding: var(--spacing-xs) var(--spacing-sm);
-  border-radius: var(--radius-full);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-bold);
-  text-transform: uppercase;
-  transform: rotate(12deg);
 }
 
 .text-error {

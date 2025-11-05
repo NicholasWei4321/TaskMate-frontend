@@ -69,9 +69,10 @@
 
     <div v-else class="tasks-list">
       <TaskCard
-        v-for="task in filteredTasks"
+        v-for="(task, index) in filteredTasks"
         :key="task._id"
         :task="task"
+        :priority-rank="index + 1"
         @complete="handleCompleteTask"
         @edit="handleEditTask"
         @snooze="handleSnoozeTask"

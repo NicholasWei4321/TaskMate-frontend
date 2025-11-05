@@ -22,11 +22,15 @@ Vue.js 3 frontend for TaskMate - an AI-enhanced task management application.
 
 ### Prerequisites
 - Node.js (v16 or higher)
-- Backend server running on `http://localhost:8000`
+- TaskMate backend server running on `http://localhost:8000` (from separate backend repository)
 
 ### Installation
 
 ```bash
+# Clone this repository
+git clone <your-frontend-repo-url>
+cd TaskMate-frontend
+
 # Install dependencies
 npm install
 
@@ -37,55 +41,70 @@ npm run dev
 npm run build
 ```
 
-### Environment Setup
+### Running the Application
 
-The frontend expects the backend API to be available at `http://localhost:8000/api`.
+**Step 1: Start the Backend Server**
 
-Make sure your backend is running before starting the frontend:
+In your TaskMate backend repository:
 ```bash
-# In the TaskMate root directory
 deno run --allow-all src/concept_server.ts
 ```
+
+The backend will start on `http://localhost:8000`
+
+**Step 2: Start the Frontend Development Server**
+
+In this repository:
+```bash
+npm run dev
+```
+
+The frontend will start on `http://localhost:5173` and will proxy API requests to the backend.
+
+**Step 3: Open in Browser**
+
+Navigate to `http://localhost:5173` to view the application.
 
 ## Project Structure
 
 ```
-client/
+TaskMate-frontend/
 ├── src/
 │   ├── api/              # API service layer
-│   │   ├── client.js     # Axios configuration
+│   │   ├── client.js     # Axios configuration with interceptors
 │   │   ├── auth.js       # Authentication API
 │   │   ├── tasks.js      # Tasks API
 │   │   ├── lists.js      # Lists API
-│   │   └── sync.js       # Sync API
+│   │   └── sync.js       # External sync API
 │   ├── assets/
-│   │   └── styles/       # Design system
-│   │       ├── variables.css  # CSS variables
-│   │       └── global.css     # Global styles
-│   ├── components/       # Vue components
-│   │   ├── NavBar.vue
+│   │   └── styles/       # Custom design system
+│   │       ├── variables.css  # CSS variables & design tokens
+│   │       └── global.css     # Global styles & utilities
+│   ├── components/       # Reusable Vue components
+│   │   ├── NavBar.vue           # Navigation bar
 │   │   └── tasks/
-│   │       └── TaskCard.vue
-│   ├── stores/           # Pinia stores
-│   │   ├── auth.js       # Auth state
+│   │       └── TaskCard.vue     # Task display card
+│   ├── stores/           # Pinia state management
+│   │   ├── auth.js       # Authentication state
 │   │   ├── tasks.js      # Tasks state
 │   │   ├── lists.js      # Lists state
 │   │   └── sync.js       # Sync state
-│   ├── views/            # Page components
-│   │   ├── Login.vue
-│   │   ├── Register.vue
-│   │   ├── Dashboard.vue
-│   │   ├── Tasks.vue
-│   │   ├── Lists.vue
-│   │   └── Sync.vue
-│   ├── router/           # Vue Router config
-│   │   └── index.js
+│   ├── views/            # Page components (routes)
+│   │   ├── Login.vue     # Login page
+│   │   ├── Register.vue  # Registration page
+│   │   ├── Dashboard.vue # Dashboard with stats
+│   │   ├── Tasks.vue     # Task management page
+│   │   ├── Lists.vue     # List management page
+│   │   └── Sync.vue      # External sync page
+│   ├── router/           # Vue Router configuration
+│   │   └── index.js      # Routes & navigation guards
 │   ├── App.vue           # Root component
-│   └── main.js           # App entry point
+│   └── main.js           # Application entry point
 ├── public/               # Static assets
-├── index.html
-├── vite.config.js        # Vite configuration
-└── package.json
+├── index.html            # HTML template
+├── vite.config.js        # Vite config with API proxy
+├── package.json          # Dependencies
+└── README.md             # This file
 ```
 
 ## Design System

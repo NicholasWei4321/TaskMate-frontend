@@ -66,9 +66,10 @@
 
         <div v-else class="task-list">
           <TaskCard
-            v-for="task in topPriorityTasks"
+            v-for="(task, index) in topPriorityTasks"
             :key="task._id"
             :task="task"
+            :priority-rank="index + 1"
             @complete="handleCompleteTask"
           />
         </div>
