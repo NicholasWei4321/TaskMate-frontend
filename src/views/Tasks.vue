@@ -55,8 +55,14 @@
     </div>
 
     <div v-else-if="filteredTasks.length === 0" class="empty-state card">
-      <p>No tasks found. Create your first task to get started!</p>
-      <button @click="showCreateModal = true" class="btn btn-primary">
+      <p v-if="currentFilter === 'completed'">No completed tasks yet.</p>
+      <p v-else-if="currentFilter === 'overdue'">No overdue tasks. Great job staying on track!</p>
+      <p v-else>No tasks found. Create your first task to get started!</p>
+      <button
+        v-if="currentFilter === 'all' || currentFilter === 'active'"
+        @click="showCreateModal = true"
+        class="btn btn-primary"
+      >
         Create Task
       </button>
     </div>
