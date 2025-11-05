@@ -38,7 +38,7 @@
       </div>
     </div>
 
-    <div class="task-actions">
+    <div v-if="!task.completed" class="task-actions">
       <button
         @click="$emit('complete', task._id)"
         class="btn btn-sm btn-success"
@@ -57,6 +57,9 @@
       >
         Snooze
       </button>
+    </div>
+    <div v-else class="task-completed-badge">
+      <span class="badge badge-success">✓ Completed</span>
     </div>
 
     <div v-if="task.overdue" class="overdue-badge">
@@ -174,6 +177,12 @@ const formatDate = (date) => {
   display: flex;
   gap: var(--spacing-sm);
   flex-wrap: wrap;
+}
+
+.task-completed-badge {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-sm) 0;
 }
 
 .overdue-badge {
