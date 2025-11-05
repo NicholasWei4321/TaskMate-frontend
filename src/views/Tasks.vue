@@ -7,7 +7,7 @@
       </div>
       <button
         v-if="currentFilter === 'all' || currentFilter === 'active'"
-        @click="showCreateModal = true"
+        @click="openCreateModal"
         class="btn btn-primary"
       >
         ➕ Create Task
@@ -60,7 +60,7 @@
       <p v-else>No tasks found. Create your first task to get started!</p>
       <button
         v-if="currentFilter === 'all' || currentFilter === 'active'"
-        @click="showCreateModal = true"
+        @click="openCreateModal"
         class="btn btn-primary"
       >
         Create Task
@@ -271,6 +271,17 @@ const filteredTasks = computed(() => {
       return tasksStore.tasks;
   }
 });
+
+const getDefaultDueDate = () => {
+  const today = new Date();
+  today.setHours(23, 59, 0, 0); // Set to 11:59 PM
+  return today.toISOString().slice(0, 16); // Format for datetime-local input
+};
+
+const openCreateModal = () => {
+  newTask.value.dueDate = getDefaultDueDate();
+  showCreateModal.value = true;
+};
 
 const handleCreateTask = async () => {
   const result = await tasksStore.createTask(
