@@ -113,17 +113,6 @@
           </div>
 
           <div class="form-group">
-            <label for="baseUrl">Base URL *</label>
-            <input
-              id="baseUrl"
-              v-model="newSource.details.baseUrl"
-              type="url"
-              placeholder="https://canvas.instructure.com"
-              required
-            />
-          </div>
-
-          <div class="form-group">
             <label for="apiToken">API Token *</label>
             <input
               id="apiToken"
@@ -218,11 +207,26 @@ const formatDate = (date) => {
   });
 };
 
+const getBaseUrl = (sourceType) => {
+  const baseUrls = {
+    Canvas: 'https://canvas.mit.edu',
+    GitHub: 'https://api.github.com',
+    Gradescope: 'https://www.gradescope.com',
+  };
+  return baseUrls[sourceType] || '';
+};
+
 const handleConnect = async () => {
+  // Automatically set the base URL based on the platform
+  const baseUrl = getBaseUrl(newSource.value.sourceType);
+
   const result = await syncStore.connectSource(
     newSource.value.sourceType,
     newSource.value.sourceName,
-    newSource.value.details
+    {
+      baseUrl: baseUrl,
+      apiToken: newSource.value.details.apiToken,
+    }
   );
 
   if (result) {
