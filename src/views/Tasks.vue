@@ -5,7 +5,11 @@
         <h1>AI Prioritized Tasks</h1>
         <p class="text-muted">Manage your tasks with AI-powered priority scoring</p>
       </div>
-      <button @click="showCreateModal = true" class="btn btn-primary">
+      <button
+        v-if="currentFilter === 'all' || currentFilter === 'active'"
+        @click="showCreateModal = true"
+        class="btn btn-primary"
+      >
         ➕ Create Task
       </button>
     </div>
