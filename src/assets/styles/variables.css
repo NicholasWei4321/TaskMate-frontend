@@ -2,63 +2,63 @@
 
 :root {
   /* Base Palette Colors */
-  --carolina-blue: #87bcde;
-  --chinese-violet: #805e73;
-  --davys-gray: #4e4d5c;
-  --charcoal: #2d4654;
-  --charcoal-2: #243b4a;
+  --coyote: #7e6551;
+  --cinereous: #938581;
+  --feldgrau: #466362;
+  --cool-gray: #8896ab;
+  --columbia-blue: #c5d5e4;
 
-  /* Primary Colors - Carolina Blue */
-  --color-primary: #87bcde;
-  --color-primary-dark: #5a9cc4;
-  --color-primary-light: #a8cee8;
-  --color-primary-lighter: #d4e7f3;
+  /* Primary Colors - Cinereous */
+  --color-primary: #938581;
+  --color-primary-dark: #73665f;
+  --color-primary-light: #aea39f;
+  --color-primary-lighter: #d9d3d1;
 
-  /* Secondary Colors - Chinese Violet */
-  --color-secondary: #805e73;
-  --color-secondary-dark: #5d4454;
-  --color-secondary-light: #a38899;
+  /* Secondary Colors - Cool Gray */
+  --color-secondary: #8896ab;
+  --color-secondary-dark: #6b7a91;
+  --color-secondary-light: #a5b2c5;
 
   /* Success, Warning, Error - Adjusted to complement palette */
-  --color-success: #6ca58f;
-  --color-success-light: #d4e8df;
-  --color-warning: #d4a574;
-  --color-warning-light: #f3e5d4;
-  --color-error: #c76d6d;
-  --color-error-light: #f0d9d9;
+  --color-success: #5a7c6f;
+  --color-success-light: #d0ddd9;
+  --color-warning: #7e6551;
+  --color-warning-light: #e5dad1;
+  --color-error: #a86b6b;
+  --color-error-light: #ead9d9;
 
   /* Neutral Colors - Based on palette */
   --color-white: #ffffff;
-  --color-gray-50: #f5f6f7;
-  --color-gray-100: #e8eaec;
-  --color-gray-200: #d1d4d8;
-  --color-gray-300: #b0b5bc;
-  --color-gray-400: #898e96;
-  --color-gray-500: #6b7179;
-  --color-gray-600: #4e4d5c;
-  --color-gray-700: #3d3e4a;
-  --color-gray-800: #2d4654;
-  --color-gray-900: #243b4a;
-  --color-black: #1a2630;
+  --color-gray-50: #f5f5f6;
+  --color-gray-100: #e8e9eb;
+  --color-gray-200: #d1d3d7;
+  --color-gray-300: #b5b8be;
+  --color-gray-400: #938581;
+  --color-gray-500: #7a7673;
+  --color-gray-600: #5f5d5a;
+  --color-gray-700: #4a4846;
+  --color-gray-800: #3a3735;
+  --color-gray-900: #2b2826;
+  --color-black: #1f1d1b;
 
   /* Text Colors */
-  --color-text-primary: #2d4654;
-  --color-text-secondary: #4e4d5c;
-  --color-text-muted: #6b7179;
+  --color-text-primary: #2b2826;
+  --color-text-secondary: #466362;
+  --color-text-muted: #7a7673;
   --color-text-inverse: var(--color-white);
 
   /* Background Colors */
   --color-bg-primary: var(--color-white);
-  --color-bg-secondary: #e8eef2;
-  --color-bg-tertiary: #d4dce3;
+  --color-bg-secondary: #ebe8e6;
+  --color-bg-tertiary: #ddd7d4;
 
   /* Border Colors */
-  --color-border: #d1d4d8;
-  --color-border-dark: #b0b5bc;
+  --color-border: #d1d3d7;
+  --color-border-dark: #b5b8be;
 
   /* Typography */
   --font-family-headings: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
-  --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  --font-family-sans: 'Crimson Pro', Georgia, 'Times New Roman', serif;
   --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
 
   --font-size-xs: 0.75rem;    /* 12px */
@@ -117,4 +117,4 @@
 }
 
 /* Import Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=Crimson+Pro:wght@400;500;600;700&display=swap');

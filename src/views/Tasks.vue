@@ -58,9 +58,9 @@
     </div>
 
     <div v-else-if="filteredTasks.length === 0" class="empty-state card">
-      <p v-if="currentFilter === 'completed'">No completed tasks yet.</p>
-      <p v-else-if="currentFilter === 'overdue'">No overdue tasks. Great job staying on track!</p>
-      <p v-else>No tasks found. Create your first task to get started!</p>
+      <p class="text-ui" v-if="currentFilter === 'completed'">No completed tasks yet.</p>
+      <p class="text-ui" v-else-if="currentFilter === 'overdue'">No overdue tasks. Great job staying on track!</p>
+      <p class="text-ui" v-else>No tasks found. Create your first task to get started!</p>
       <button
         v-if="currentFilter === 'all' || currentFilter === 'active'"
         @click="openCreateModal"
@@ -392,6 +392,7 @@ const editingTask = ref({
 });
 
 const snoozeTaskId = ref('');
+const snoozeTaskDueDate = ref(null); // Store the original due date for quick snooze calculations
 const snoozeDate = ref('');
 
 const filteredTasks = computed(() => {
@@ -487,11 +488,20 @@ const handleEditTask = (task) => {
     .filter(list => list.items && list.items.some(item => item.taskId === task._id))
     .map(list => list._id);
 
+  // Format the date for datetime-local input while preserving local timezone
+  const taskDate = new Date(task.dueDate);
+  const year = taskDate.getFullYear();
+  const month = String(taskDate.getMonth() + 1).padStart(2, '0');
+  const day = String(taskDate.getDate()).padStart(2, '0');
+  const hours = String(taskDate.getHours()).padStart(2, '0');
+  const minutes = String(taskDate.getMinutes()).padStart(2, '0');
+  const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
   editingTask.value = {
     _id: task._id,
     name: task.name,
     description: task.description,
-    dueDate: new Date(task.dueDate).toISOString().slice(0, 16),
+    dueDate: formattedDate,
     inferredEffortHours: task.inferredEffortHours,
     inferredImportance: task.inferredImportance,
     inferredDifficulty: task.inferredDifficulty,
@@ -546,11 +556,18 @@ const handleCompleteTask = async (taskId) => {
   await tasksStore.completeTask(taskId);
 };
 
-const handleSnoozeTask = (taskId) => {
-  snoozeTaskId.value = taskId;
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  snoozeDate.value = tomorrow.toISOString().slice(0, 16);
+const handleSnoozeTask = (task) => {
+  snoozeTaskId.value = task._id;
+  snoozeTaskDueDate.value = new Date(task.dueDate); // Store original due date
+  // Set default to current due date + 24 hours
+  const currentDueDate = new Date(task.dueDate);
+  currentDueDate.setHours(currentDueDate.getHours() + 24);
+  const year = currentDueDate.getFullYear();
+  const month = String(currentDueDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDueDate.getDate()).padStart(2, '0');
+  const hours = String(currentDueDate.getHours()).padStart(2, '0');
+  const minutes = String(currentDueDate.getMinutes()).padStart(2, '0');
+  snoozeDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
   showSnoozeModal.value = true;
 };
 
@@ -562,9 +579,15 @@ const handleSnoozeTaskSubmit = async () => {
 };
 
 const quickSnooze = (days) => {
-  const date = new Date();
+  // Use the original due date and add the specified number of days
+  const date = new Date(snoozeTaskDueDate.value);
   date.setDate(date.getDate() + days);
-  snoozeDate.value = date.toISOString().slice(0, 16);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  snoozeDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 onMounted(async () => {

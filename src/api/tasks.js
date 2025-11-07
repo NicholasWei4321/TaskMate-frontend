@@ -17,7 +17,7 @@ export const tasksAPI = {
       task,
       newName,
       newDescription,
-      newDueDate: newDueDate ? new Date(newDueDate).toISOString() : undefined,
+      newDueDate: newDueDate ? newDueDate : undefined,
       newEffort,
       newImportance,
       newDifficulty,

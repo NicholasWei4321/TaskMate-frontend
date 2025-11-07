@@ -22,8 +22,8 @@
     <div v-else-if="syncStore.sources.length === 0" class="empty-state card">
       <div class="empty-icon">↻</div>
       <h2>No Sources Connected</h2>
-      <p class="text-muted">
-        Connect external platforms like Canvas or GitHub to automatically import assignments
+      <p class="text-muted text-ui">
+        Connect Canvas to automatically import assignments
       </p>
       <button @click="showConnectModal = true" class="btn btn-primary">
         Connect Your First Source
@@ -96,8 +96,8 @@
             <select id="sourceType" v-model="newSource.sourceType" required>
               <option value="">Select a platform...</option>
               <option value="Canvas">Canvas LMS</option>
-              <option value="GitHub">GitHub Classroom</option>
-              <option value="Gradescope">Gradescope</option>
+              <!-- <option value="GitHub">GitHub Classroom</option> -->
+              <!-- <option value="Gradescope">Gradescope</option> -->
             </select>
           </div>
 

@@ -2,6 +2,23 @@
 
 Vue.js 3 frontend for TaskMate - an AI-enhanced task management application.
 
+## Visual Design Study
+![Typography Study](./readme_assets/typography.jpg)
+![Color Study](./readme_assets/colors.jpg)
+
+## User Journey
+A user starts by logging in or creating an account with their credentials to access their personalized dashboard.
+
+On their dashboard, they can create their first task by clicking the "Create Task" button, entering a task name, description, and due date. Subsequent tasks can be viewed/edited/modified in the Tasks tab. An LLM automatically evaluates importance, difficulty, and effort to calculate a priority score for the task(s).
+
+The user navigates to "To-do Lists" to create custom lists for organizing tasks, or let the system automatically add tasks to Daily, Weekly, or Monthly lists based on their due dates. The tasks in these lists are all ranked by priority.
+
+They then connect their Canvas account through the "Sync" tab by entering their Canvas API token, then sync assignments to automatically import them as AI-prioritized tasks. They return to the Dashboard or Tasks page to view their tasks ranked by AI-calculated priority scores, with overdue items highlighted and top priorities surfaced first.
+
+As the user finishes tasks, they click the "Complete" button to check them off, which automatically clears them from their active lists while maintaining a record of their accomplishments.
+
+Watch the user journey video [here](https://www.youtube.com/watch?v=WrQa9oOvqN4).
+
 ## Features
 
 ### Core Functionality
@@ -107,15 +124,6 @@ TaskMate-frontend/
 └── README.md             # This file
 ```
 
-## Design System
-
-The application uses a custom design system with:
-- **Color Palette**: Professional blues and purples with semantic colors
-- **Typography**: Inter font family with 8 size scales
-- **Spacing**: Consistent spacing scale (4px to 64px)
-- **Components**: Reusable button, card, badge, and form styles
-- **Accessibility**: High contrast ratios and keyboard navigation
-
 ## API Integration
 
 The frontend communicates with the backend through four main API services:
@@ -157,41 +165,3 @@ Each store handles:
 - Protected routes require authentication
 - Guest routes redirect authenticated users
 - Lazy loading for better performance
-
-## Building for Production
-
-```bash
-# Build optimized production bundle
-npm run build
-
-# Preview production build
-npm run preview
-```
-
-The build output will be in the `dist/` directory.
-
-## Browser Support
-
-- Chrome/Edge (latest)
-- Firefox (latest)
-- Safari (latest)
-
-## Assignment 4b Compliance
-
-This frontend implementation fulfills all Assignment 4b requirements:
-
-✅ **Vue.js 3** with reactive components
-✅ **Axios** for API communication
-✅ **State management** with Pinia
-✅ **Visual design** with custom design system
-✅ **Full functionality** without page refreshes
-✅ **Component architecture** with proper separation of concerns
-✅ **Backend integration** with all 4 concepts
-
-## Screenshots
-
-(Add screenshots here for your submission)
-
-## License
-
-MIT

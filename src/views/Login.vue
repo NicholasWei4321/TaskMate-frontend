@@ -59,7 +59,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 
@@ -68,6 +68,10 @@ const authStore = useAuthStore();
 
 const username = ref('');
 const password = ref('');
+
+onMounted(() => {
+  authStore.clearError();
+});
 
 const handleLogin = async () => {
   const success = await authStore.login(username.value, password.value);

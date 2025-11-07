@@ -108,13 +108,13 @@ const handleLogout = async () => {
 }
 
 .nav-link:hover {
-  color: var(--color-primary);
-  background-color: var(--color-primary-lighter);
+  color: var(--color-secondary);
+  background-color: var(--color-secondary-light);
 }
 
 .nav-link.active {
-  color: var(--color-primary-dark);
-  background-color: var(--color-primary-lighter);
+  color: var(--feldgrau);
+  background-color: var(--color-secondary-light);
   font-weight: var(--font-weight-semibold);
 }
 

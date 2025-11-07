@@ -55,7 +55,7 @@
         Edit
       </button>
       <button
-        @click="$emit('snooze', task._id)"
+        @click="$emit('snooze', task)"
         class="btn btn-sm btn-outline"
       >
         Snooze
@@ -161,7 +161,7 @@ const formatDate = (date) => {
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-md);
-  background-color: var(--color-bg-secondary);
+  background-color: #e8f0f5;
   border-radius: var(--radius-md);
 }
 

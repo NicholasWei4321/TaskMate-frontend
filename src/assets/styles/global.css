@@ -63,18 +63,25 @@ p {
 }
 
 a {
-  color: var(--color-primary);
+  color: var(--color-secondary);
   text-decoration: none;
   transition: color var(--transition-fast);
+  font-family: var(--font-family-headings);
 }
 
 a:hover {
-  color: var(--color-primary-dark);
+  color: var(--feldgrau);
+}
+
+/* Labels */
+label {
+  font-family: var(--font-family-headings);
+  font-weight: var(--font-weight-medium);
 }
 
 /* Button Base Styles */
 button {
-  font-family: var(--font-family-sans);
+  font-family: var(--font-family-headings);
   font-size: var(--font-size-base);
   font-weight: var(--font-weight-medium);
   cursor: pointer;
@@ -96,7 +103,7 @@ button:disabled {
 input,
 textarea,
 select {
-  font-family: var(--font-family-sans);
+  font-family: var(--font-family-headings);
   font-size: var(--font-size-base);
   color: var(--color-text-primary);
   border: 1px solid var(--color-border);
@@ -204,6 +211,7 @@ textarea::placeholder {
   border-radius: var(--radius-full);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family-headings);
 }
 
 .badge-primary {
@@ -231,6 +239,7 @@ textarea::placeholder {
   border-radius: var(--radius-md);
   margin-bottom: var(--spacing-md);
   border-left: 4px solid;
+  font-family: var(--font-family-headings);
 }
 
 .alert-success {
@@ -265,6 +274,11 @@ textarea::placeholder {
 
 .text-lg {
   font-size: var(--font-size-lg);
+}
+
+/* UI Text - for interface messages, empty states, prompts */
+.text-ui {
+  font-family: var(--font-family-headings);
 }
 
 .mt-0 { margin-top: 0; }

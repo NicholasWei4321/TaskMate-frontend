@@ -62,7 +62,7 @@
         </div>
 
         <div v-else-if="tasksStore.prioritizedTasks.length === 0" class="empty-state card">
-          <p>No active tasks. Create your first task to get started!</p>
+          <p class="text-ui">No active tasks. Create your first task to get started!</p>
           <button @click="openCreateModal" class="btn btn-primary">Create Task</button>
         </div>
 
@@ -709,6 +709,7 @@ onMounted(async () => {
 }
 
 .action-title {
+  font-family: var(--font-family-headings);
   font-weight: var(--font-weight-semibold);
   margin-bottom: var(--spacing-xs);
 }

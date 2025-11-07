@@ -27,9 +27,8 @@
               id="password"
               v-model="password"
               type="password"
-              placeholder="Choose a password"
+              placeholder="Choose a password (min 6 characters)"
               required
-              minlength="6"
               :disabled="authStore.loading"
             />
           </div>
@@ -42,7 +41,6 @@
               type="password"
               placeholder="Confirm your password"
               required
-              minlength="6"
               :disabled="authStore.loading"
             />
           </div>
@@ -77,7 +75,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { useAuthStore } from '../stores/auth';
 import { useListsStore } from '../stores/lists';
@@ -90,6 +88,11 @@ const username = ref('');
 const password = ref('');
 const confirmPassword = ref('');
 const localError = ref('');
+
+onMounted(() => {
+  authStore.clearError();
+  localError.value = '';
+});
 
 const createDefaultLists = async () => {
   const now = new Date();
@@ -145,6 +148,11 @@ const createDefaultLists = async () => {
 
 const handleRegister = async () => {
   localError.value = '';
+
+  if (password.value.length < 6) {
+    localError.value = 'Password must be at least 6 characters long';
+    return;
+  }
 
   if (password.value !== confirmPassword.value) {
     localError.value = 'Passwords do not match';

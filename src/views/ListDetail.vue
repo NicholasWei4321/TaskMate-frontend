@@ -47,7 +47,7 @@
 
       <!-- Tasks Display -->
       <div v-if="listTasks.length === 0" class="empty-state card">
-        <p>No tasks in this list yet.</p>
+        <p class="text-ui">No tasks in this list yet.</p>
         <button @click="showAddTasksModal = true" class="btn btn-primary">
           Add Tasks
         </button>

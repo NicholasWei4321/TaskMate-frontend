@@ -20,7 +20,7 @@
     </div>
 
     <div v-else-if="listsStore.lists.length === 0" class="empty-state card">
-      <p>No lists found. Create your first list to organize your tasks!</p>
+      <p class="text-ui">No lists found. Create your first list to organize your tasks!</p>
       <button @click="showCreateModal = true" class="btn btn-primary">
         Create List
       </button>
@@ -66,7 +66,11 @@
           <button @click="editList(list)" class="btn btn-sm btn-outline">
             Edit
           </button>
-          <button @click="confirmDeleteList(list._id)" class="btn btn-sm btn-danger">
+          <button
+            v-if="!isDefaultList(list)"
+            @click="confirmDeleteList(list._id)"
+            class="btn btn-sm btn-danger"
+          >
             Delete
           </button>
         </div>
@@ -238,6 +242,30 @@
       </div>
     </div>
 
+    <!-- Delete Confirmation Modal -->
+    <div v-if="showDeleteModal" class="modal-overlay" @click="showDeleteModal = false">
+      <div class="modal-content card" @click.stop>
+        <div class="modal-header">
+          <h2>Delete List</h2>
+          <button @click="showDeleteModal = false" class="close-btn">×</button>
+        </div>
+
+        <div class="modal-body">
+          <p>Are you sure you want to delete this list?</p>
+          <p class="text-muted text-sm">This action cannot be undone.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="showDeleteModal = false" class="btn btn-outline">
+            Cancel
+          </button>
+          <button @click="handleDeleteList" class="btn btn-danger">
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- List Detail Modal -->
     <div v-if="showDetailModal" class="modal-overlay" @click="showDetailModal = false">
       <div class="modal-content card modal-large" @click.stop>
@@ -340,8 +368,10 @@ const tasksStore = useTasksStore();
 const showCreateModal = ref(false);
 const showEditModal = ref(false);
 const showDetailModal = ref(false);
+const showDeleteModal = ref(false);
 const selectedList = ref(null);
 const selectedTaskIds = ref([]);
+const listToDelete = ref(null);
 
 const newList = ref({
   name: '',
@@ -382,6 +412,11 @@ const isListActive = (list) => {
   const start = new Date(list.startTime);
   const end = new Date(list.endTime);
   return now >= start && now <= end;
+};
+
+const isDefaultList = (list) => {
+  const defaultListNames = ['Daily To-dos', 'Weekly To-dos', 'Monthly To-dos'];
+  return defaultListNames.includes(list.name);
 };
 
 const formatDate = (date) => {
@@ -486,9 +521,16 @@ const getTaskName = (taskId) => {
   return task ? task.name : `Task ${taskId}`;
 };
 
-const confirmDeleteList = async (listId) => {
-  if (confirm('Are you sure you want to delete this list?')) {
-    await listsStore.deleteList(listId);
+const confirmDeleteList = (listId) => {
+  listToDelete.value = listId;
+  showDeleteModal.value = true;
+};
+
+const handleDeleteList = async () => {
+  if (listToDelete.value) {
+    await listsStore.deleteList(listToDelete.value);
+    showDeleteModal.value = false;
+    listToDelete.value = null;
   }
 };
 
@@ -623,7 +665,7 @@ onMounted(async () => {
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-md);
   padding: var(--spacing-md);
-  background-color: var(--color-bg-secondary);
+  background-color: #e8f0f5;
   border-radius: var(--radius-md);
 }
 
@@ -682,6 +724,14 @@ onMounted(async () => {
 
 .modal-header h2 {
   margin-bottom: 0;
+}
+
+.modal-body {
+  margin-bottom: var(--spacing-lg);
+}
+
+.modal-body p {
+  margin-bottom: var(--spacing-sm);
 }
 
 .close-btn {
@@ -748,7 +798,7 @@ onMounted(async () => {
   flex-wrap: wrap;
   gap: var(--spacing-md);
   padding: var(--spacing-md);
-  background-color: var(--color-bg-secondary);
+  background-color: #e8f0f5;
   border-radius: var(--radius-md);
 }
 

@@ -84,6 +84,10 @@ export const useAuthStore = defineStore('auth', {
       }
     },
 
+    clearError() {
+      this.error = null;
+    },
+
     async storeCredential(credentialType, credentialValue) {
       try {
         const result = await authAPI.storeCredential(
