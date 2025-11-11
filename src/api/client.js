@@ -1,8 +1,11 @@
 // API client configuration
 import axios from 'axios';
 
+// Use environment variable for deployed backend, fallback to /api for local development
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
+
 const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
