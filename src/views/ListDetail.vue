@@ -45,6 +45,14 @@
         </div>
       </div>
 
+      <!-- Error Alert -->
+      <div v-if="listsStore.error" class="alert alert-error">
+        <div class="alert-content">
+          <span>{{ listsStore.error }}</span>
+          <button @click="listsStore.error = null" class="close-btn">✕</button>
+        </div>
+      </div>
+
       <!-- Tasks Display -->
       <div v-if="listTasks.length === 0" class="empty-state card">
         <p class="text-ui">No tasks in this list yet.</p>
@@ -70,7 +78,7 @@
               <template #extra-actions>
                 <button
                   @click="handleRemoveFromList(task._id)"
-                  class="btn btn-sm btn-outline"
+                  class="btn btn-sm btn-outline btn-outline-danger"
                   title="Remove from list"
                 >
                   Remove from List
@@ -97,7 +105,7 @@
               <template #extra-actions>
                 <button
                   @click="handleRemoveFromList(task._id)"
-                  class="btn btn-sm btn-outline"
+                  class="btn btn-sm btn-outline btn-outline-danger"
                   title="Remove from list"
                 >
                   Remove from List
@@ -298,6 +306,13 @@
         </div>
 
         <form @submit.prevent="handleUpdateList" class="task-form">
+          <div v-if="editListError" class="alert alert-error" style="margin-bottom: var(--spacing-md);">
+            <div class="alert-content">
+              <span>{{ editListError }}</span>
+              <button type="button" @click="editListError = null" class="close-btn">✕</button>
+            </div>
+          </div>
+
           <div class="form-group">
             <label for="editListName">List Name *</label>
             <input
@@ -315,6 +330,7 @@
               id="editStartTime"
               v-model="editingList.startTime"
               type="datetime-local"
+              @focus="handleEditStartTimeFocus"
             />
           </div>
 
@@ -324,6 +340,7 @@
               id="editEndTime"
               v-model="editingList.endTime"
               type="datetime-local"
+              @focus="handleEditEndTimeFocus"
             />
           </div>
 
@@ -359,6 +376,56 @@
         </form>
       </div>
     </div>
+
+    <!-- Clear All Confirmation Modal -->
+    <div v-if="showClearAllModal" class="modal-overlay" @click="showClearAllModal = false">
+      <div class="modal-content card" @click.stop>
+        <div class="modal-header">
+          <h2>Clear All Tasks</h2>
+          <button @click="showClearAllModal = false" class="close-btn">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p>Are you sure you want to remove all {{ currentList?.items?.length || 0 }} task(s) from "{{ currentList?.name }}"?</p>
+          <p class="text-muted text-sm">This action cannot be undone.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="showClearAllModal = false" class="btn btn-outline">
+            Cancel
+          </button>
+          <button @click="handleClearAllConfirmed" class="btn btn-danger" :disabled="listsStore.loading">
+            <span v-if="listsStore.loading" class="loading"></span>
+            <span v-else>Clear All</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Remove Task Confirmation Modal -->
+    <div v-if="showRemoveTaskModal" class="modal-overlay" @click="showRemoveTaskModal = false">
+      <div class="modal-content card" @click.stop>
+        <div class="modal-header">
+          <h2>Remove Task from List</h2>
+          <button @click="showRemoveTaskModal = false" class="close-btn">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <p>Are you sure you want to remove "{{ taskToRemove?.name }}" from "{{ currentList?.name }}"?</p>
+          <p class="text-muted text-sm">This will only remove it from the list, not delete the task.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="showRemoveTaskModal = false" class="btn btn-outline">
+            Cancel
+          </button>
+          <button @click="handleRemoveTaskConfirmed" class="btn btn-danger" :disabled="listsStore.loading">
+            <span v-if="listsStore.loading" class="loading"></span>
+            <span v-else>Remove from List</span>
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -378,7 +445,10 @@ const showAddTasksModal = ref(false);
 const showEditModal = ref(false);
 const showEditListModal = ref(false);
 const showSnoozeModal = ref(false);
+const showClearAllModal = ref(false);
+const showRemoveTaskModal = ref(false);
 const selectedTaskIds = ref([]);
+const taskToRemove = ref(null);
 
 const editingTask = ref({
   _id: '',
@@ -392,6 +462,7 @@ const editingTask = ref({
 
 const snoozeTaskId = ref('');
 const snoozeDate = ref('');
+const snoozeTaskDueDate = ref(null);
 
 const editingList = ref({
   _id: '',
@@ -401,6 +472,8 @@ const editingList = ref({
   autoClearCompleted: false,
   recurrenceType: 'none',
 });
+
+const editListError = ref(null);
 
 const currentList = computed(() => {
   return listsStore.lists.find(l => l._id === route.params.id);
@@ -469,12 +542,49 @@ const isDefaultDate = (date) => {
   return timestamp === 0 || d.getFullYear() === 1970 || d.getFullYear() === 9999;
 };
 
+// Helper function to convert UTC date to local datetime string for datetime-local input
+const toLocalDateTimeString = (utcDate) => {
+  const date = new Date(utcDate);
+  // Get local time components
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Helper function to get default start time (today at 12:00 AM)
+const getDefaultStartTime = () => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return toLocalDateTimeString(date);
+};
+
+// Helper function to get default end time (today at 11:59 PM)
+const getDefaultEndTime = () => {
+  const date = new Date();
+  date.setHours(23, 59, 0, 0);
+  return toLocalDateTimeString(date);
+};
+
 const handleEditList = () => {
   if (!currentList.value) return;
 
-  // For default dates, leave the input empty instead of showing 1970/9999
-  const startTime = isDefaultDate(currentList.value.startTime) ? '' : new Date(currentList.value.startTime).toISOString().slice(0, 16);
-  const endTime = isDefaultDate(currentList.value.endTime) ? '' : new Date(currentList.value.endTime).toISOString().slice(0, 16);
+  // Clear any previous errors
+  editListError.value = null;
+
+  // For default dates, leave empty; otherwise format in local timezone
+  let startTime = '';
+  let endTime = '';
+
+  if (!isDefaultDate(currentList.value.startTime)) {
+    startTime = toLocalDateTimeString(currentList.value.startTime);
+  }
+
+  if (!isDefaultDate(currentList.value.endTime)) {
+    endTime = toLocalDateTimeString(currentList.value.endTime);
+  }
 
   editingList.value = {
     _id: currentList.value._id,
@@ -487,8 +597,25 @@ const handleEditList = () => {
   showEditListModal.value = true;
 };
 
+// Set default start time when user focuses on the start time input in edit modal
+const handleEditStartTimeFocus = () => {
+  if (!editingList.value.startTime) {
+    editingList.value.startTime = getDefaultStartTime();
+  }
+};
+
+// Set default end time when user focuses on the end time input in edit modal
+const handleEditEndTimeFocus = () => {
+  if (!editingList.value.endTime) {
+    editingList.value.endTime = getDefaultEndTime();
+  }
+};
+
 const handleUpdateList = async () => {
-  const result = await listsStore.updateList(
+  // Clear previous error
+  editListError.value = null;
+
+  await listsStore.updateList(
     editingList.value._id,
     editingList.value.name,
     editingList.value.startTime || undefined,
@@ -497,7 +624,12 @@ const handleUpdateList = async () => {
     editingList.value.recurrenceType
   );
 
-  if (result) {
+  // Check for errors and display in modal
+  if (listsStore.error) {
+    editListError.value = listsStore.error;
+    listsStore.error = null; // Clear from store to prevent showing on page
+  } else {
+    // Close modal and refresh if no error
     showEditListModal.value = false;
     await listsStore.fetchLists();
   }
@@ -506,47 +638,84 @@ const handleUpdateList = async () => {
 const handleAddTasks = async () => {
   if (selectedTaskIds.value.length === 0 || !currentList.value) return;
 
-  // Add all selected tasks
+  let failedCount = 0;
+  let successCount = 0;
+
+  // Attempt to add all selected tasks
   for (const taskId of selectedTaskIds.value) {
     const task = tasksStore.tasks.find(t => t._id === taskId);
     if (task) {
-      await listsStore.addListItem(
+      const success = await listsStore.addListItem(
         currentList.value._id,
         taskId,
         task.dueDate
       );
+
+      if (success) {
+        successCount++;
+      } else {
+        failedCount++;
+      }
     }
   }
 
-  // Clear selection and refresh
+  // Clear the individual error from the store
+  listsStore.error = null;
+
+  // Build error message if some tasks failed
+  let errorMessage = null;
+  if (failedCount > 0) {
+    errorMessage = `${failedCount} task(s) could not be added because their due dates do not fall within this list's time range (${formatDate(currentList.value.startTime)} - ${formatDate(currentList.value.endTime)}).`;
+  }
+
+  // Clear selection and close modal
   selectedTaskIds.value = [];
   showAddTasksModal.value = false;
+
+  // Refresh the list to show successfully added tasks
+  await listsStore.fetchLists();
+
+  // Set error after fetching (so it doesn't get cleared by fetchLists)
+  if (errorMessage) {
+    listsStore.error = errorMessage;
+  }
+};
+
+const handleRemoveFromList = (taskId) => {
+  if (!currentList.value) return;
+
+  const task = currentList.value.items.find(item => item.id === taskId);
+  taskToRemove.value = task;
+  showRemoveTaskModal.value = true;
+};
+
+const handleRemoveTaskConfirmed = async () => {
+  if (!currentList.value || !taskToRemove.value) return;
+
+  await listsStore.removeListItem(currentList.value._id, taskToRemove.value.id);
+
+  // Close modal and refresh
+  showRemoveTaskModal.value = false;
+  taskToRemove.value = null;
   await listsStore.fetchLists();
 };
 
-const handleRemoveFromList = async (taskId) => {
+const handleClearAllTasks = () => {
   if (!currentList.value) return;
-
-  if (confirm('Remove this task from the list?')) {
-    await listsStore.removeListItem(currentList.value._id, taskId);
-    await listsStore.fetchLists();
-  }
+  showClearAllModal.value = true;
 };
 
-const handleClearAllTasks = async () => {
+const handleClearAllConfirmed = async () => {
   if (!currentList.value) return;
 
-  if (!confirm(`Are you sure you want to remove all ${currentList.value.items.length} task(s) from "${currentList.value.name}"?`)) {
-    return;
-  }
-
-  // Remove all items one by one
+  // Remove all items in parallel
   const itemIds = currentList.value.items.map(item => item.id);
-  for (const itemId of itemIds) {
-    await listsStore.removeListItem(currentList.value._id, itemId);
-  }
+  await Promise.all(
+    itemIds.map(itemId => listsStore.removeListItem(currentList.value._id, itemId))
+  );
 
-  // Refresh
+  // Close modal and refresh
+  showClearAllModal.value = false;
   await listsStore.fetchLists();
 };
 
@@ -555,11 +724,20 @@ const handleCompleteTask = async (taskId) => {
 };
 
 const handleEditTask = (task) => {
+  // Format the date for datetime-local input while preserving local timezone
+  const taskDate = new Date(task.dueDate);
+  const year = taskDate.getFullYear();
+  const month = String(taskDate.getMonth() + 1).padStart(2, '0');
+  const day = String(taskDate.getDate()).padStart(2, '0');
+  const hours = String(taskDate.getHours()).padStart(2, '0');
+  const minutes = String(taskDate.getMinutes()).padStart(2, '0');
+  const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+
   editingTask.value = {
     _id: task._id,
     name: task.name,
     description: task.description,
-    dueDate: new Date(task.dueDate).toISOString().slice(0, 16),
+    dueDate: formattedDate,
     inferredEffortHours: task.inferredEffortHours,
     inferredImportance: task.inferredImportance,
     inferredDifficulty: task.inferredDifficulty,
@@ -583,11 +761,18 @@ const handleUpdateTask = async () => {
   }
 };
 
-const handleSnoozeTask = (taskId) => {
-  snoozeTaskId.value = taskId;
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  snoozeDate.value = tomorrow.toISOString().slice(0, 16);
+const handleSnoozeTask = (task) => {
+  snoozeTaskId.value = task._id;
+  snoozeTaskDueDate.value = new Date(task.dueDate); // Store original due date
+  // Set default to current due date + 24 hours
+  const currentDueDate = new Date(task.dueDate);
+  currentDueDate.setHours(currentDueDate.getHours() + 24);
+  const year = currentDueDate.getFullYear();
+  const month = String(currentDueDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDueDate.getDate()).padStart(2, '0');
+  const hours = String(currentDueDate.getHours()).padStart(2, '0');
+  const minutes = String(currentDueDate.getMinutes()).padStart(2, '0');
+  snoozeDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
   showSnoozeModal.value = true;
 };
 
@@ -599,9 +784,15 @@ const handleSnoozeTaskSubmit = async () => {
 };
 
 const quickSnooze = (days) => {
-  const date = new Date();
+  // Use the original due date and add the specified number of days
+  const date = new Date(snoozeTaskDueDate.value);
   date.setDate(date.getDate() + days);
-  snoozeDate.value = date.toISOString().slice(0, 16);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  snoozeDate.value = `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 
 onMounted(async () => {
@@ -773,7 +964,12 @@ onMounted(async () => {
 }
 
 .modal-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   margin-bottom: var(--spacing-lg);
+}
+
+.modal-body p {
+  margin-bottom: var(--spacing-sm);
 }
 
 .task-form {
@@ -843,6 +1039,31 @@ onMounted(async () => {
 
 .checkbox-label input[type="checkbox"] {
   width: auto;
+}
+
+/* Alert Styles */
+.alert {
+  display: flex;
+  align-items: center;
+  padding: var(--spacing-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid;
+  font-family: var(--font-family-headings);
+}
+
+.alert-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: var(--spacing-md);
+}
+
+.alert-error {
+  background-color: var(--color-error-light);
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 @media (max-width: 768px) {

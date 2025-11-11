@@ -5,13 +5,9 @@
         <h1>To-do Lists</h1>
         <p class="text-muted">Organize tasks into time-scoped collections</p>
       </div>
-      <button @click="showCreateModal = true" class="btn btn-primary">
+      <button @click="openCreateModal" class="btn btn-primary">
         + Create List
       </button>
-    </div>
-
-    <div v-if="listsStore.error" class="alert alert-error">
-      {{ listsStore.error }}
     </div>
 
     <div v-if="listsStore.loading" class="loading-state">
@@ -21,7 +17,7 @@
 
     <div v-else-if="listsStore.lists.length === 0" class="empty-state card">
       <p class="text-ui">No lists found. Create your first list to organize your tasks!</p>
-      <button @click="showCreateModal = true" class="btn btn-primary">
+      <button @click="openCreateModal" class="btn btn-primary">
         Create List
       </button>
     </div>
@@ -85,6 +81,10 @@
           <button @click="showCreateModal = false" class="close-btn">×</button>
         </div>
 
+        <div v-if="listsStore.error" class="alert alert-error">
+          {{ listsStore.error }}
+        </div>
+
         <form @submit.prevent="handleCreateList" class="list-form">
           <div class="form-group">
             <label for="listName">List Name *</label>
@@ -103,6 +103,7 @@
               id="startTime"
               v-model="newList.startTime"
               type="datetime-local"
+              @focus="handleStartTimeFocus"
             />
           </div>
 
@@ -112,6 +113,7 @@
               id="endTime"
               v-model="newList.endTime"
               type="datetime-local"
+              @focus="handleEndTimeFocus"
             />
           </div>
 
@@ -179,6 +181,10 @@
           <button @click="showEditModal = false" class="close-btn">×</button>
         </div>
 
+        <div v-if="listsStore.error" class="alert alert-error">
+          {{ listsStore.error }}
+        </div>
+
         <form @submit.prevent="handleUpdateList" class="list-form">
           <div class="form-group">
             <label for="editListName">List Name *</label>
@@ -197,6 +203,7 @@
               id="editStartTime"
               v-model="editingList.startTime"
               type="datetime-local"
+              @focus="handleEditStartTimeFocus"
             />
           </div>
 
@@ -206,6 +213,7 @@
               id="editEndTime"
               v-model="editingList.endTime"
               type="datetime-local"
+              @focus="handleEditEndTimeFocus"
             />
           </div>
 
@@ -450,7 +458,7 @@ const handleCreateList = async () => {
   if (result) {
     // Add selected tasks to the newly created list
     if (newList.value.selectedTasks.length > 0) {
-      const listId = result.list;
+      const listId = result; // result is already the list ID
       for (const taskId of newList.value.selectedTasks) {
         const task = tasksStore.tasks.find(t => t._id === taskId);
         if (task) {
@@ -485,10 +493,76 @@ const isDefaultDate = (date) => {
   return timestamp === 0 || d.getFullYear() === 1970 || d.getFullYear() === 9999;
 };
 
+// Helper function to convert UTC date to local datetime string for datetime-local input
+const toLocalDateTimeString = (utcDate) => {
+  const date = new Date(utcDate);
+  // Get local time components
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
+// Helper function to get default start time (today at 12:00 AM)
+const getDefaultStartTime = () => {
+  const date = new Date();
+  date.setHours(0, 0, 0, 0);
+  return toLocalDateTimeString(date);
+};
+
+// Helper function to get default end time (today at 11:59 PM)
+const getDefaultEndTime = () => {
+  const date = new Date();
+  date.setHours(23, 59, 0, 0);
+  return toLocalDateTimeString(date);
+};
+
+const openCreateModal = () => {
+  listsStore.error = null; // Clear any previous errors
+
+  // Reset form with empty values
+  newList.value = {
+    name: '',
+    startTime: '',
+    endTime: '',
+    autoClearCompleted: false,
+    recurrenceType: 'none',
+    selectedTasks: [],
+  };
+
+  showCreateModal.value = true;
+};
+
+// Set default start time when user focuses on the start time input
+const handleStartTimeFocus = () => {
+  if (!newList.value.startTime) {
+    newList.value.startTime = getDefaultStartTime();
+  }
+};
+
+// Set default end time when user focuses on the end time input
+const handleEndTimeFocus = () => {
+  if (!newList.value.endTime) {
+    newList.value.endTime = getDefaultEndTime();
+  }
+};
+
 const editList = (list) => {
-  // For default dates, leave the input empty instead of showing 1970/9999
-  const startTime = isDefaultDate(list.startTime) ? '' : new Date(list.startTime).toISOString().slice(0, 16);
-  const endTime = isDefaultDate(list.endTime) ? '' : new Date(list.endTime).toISOString().slice(0, 16);
+  listsStore.error = null; // Clear any previous errors
+
+  // For default dates, leave empty; otherwise format in local timezone
+  let startTime = '';
+  let endTime = '';
+
+  if (!isDefaultDate(list.startTime)) {
+    startTime = toLocalDateTimeString(list.startTime);
+  }
+
+  if (!isDefaultDate(list.endTime)) {
+    endTime = toLocalDateTimeString(list.endTime);
+  }
 
   editingList.value = {
     _id: list._id,
@@ -499,6 +573,20 @@ const editList = (list) => {
     recurrenceType: list.recurrenceType,
   };
   showEditModal.value = true;
+};
+
+// Set default start time when user focuses on the start time input in edit modal
+const handleEditStartTimeFocus = () => {
+  if (!editingList.value.startTime) {
+    editingList.value.startTime = getDefaultStartTime();
+  }
+};
+
+// Set default end time when user focuses on the end time input in edit modal
+const handleEditEndTimeFocus = () => {
+  if (!editingList.value.endTime) {
+    editingList.value.endTime = getDefaultEndTime();
+  }
 };
 
 const handleUpdateList = async () => {

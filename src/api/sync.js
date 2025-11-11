@@ -45,14 +45,14 @@ export const syncAPI = {
   },
 
   async getSourcesForUser(user) {
-    const response = await apiClient.post('/ExternalAssignmentSync/_getSourcesForUser', {
+    const response = await apiClient.post('/ExternalAssignmentSync/getSourcesForUser', {
       user,
     });
     return response.data;
   },
 
   async getMappedInternalId(externalId, sourceAccount) {
-    const response = await apiClient.post('/ExternalAssignmentSync/_getMappedInternalId', {
+    const response = await apiClient.post('/ExternalAssignmentSync/getMappedInternalId', {
       externalId,
       sourceAccount,
     });
@@ -60,7 +60,7 @@ export const syncAPI = {
   },
 
   async getAssignmentsForSource(sourceAccount) {
-    const response = await apiClient.post('/ExternalAssignmentSync/_getAssignmentsForSource', {
+    const response = await apiClient.post('/ExternalAssignmentSync/getAssignmentsForSource', {
       sourceAccount,
     });
     return response.data;

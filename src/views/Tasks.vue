@@ -17,10 +17,6 @@
       </button>
     </div>
 
-    <div v-if="tasksStore.error" class="alert alert-error">
-      {{ tasksStore.error }}
-    </div>
-
     <div class="tasks-filters">
       <button
         @click="currentFilter = 'all'"
@@ -128,6 +124,10 @@
           <button @click="showCreateModal = false" class="close-btn">×</button>
         </div>
 
+        <div v-if="tasksStore.error" class="alert alert-error">
+          {{ tasksStore.error }}
+        </div>
+
         <form @submit.prevent="handleCreateTask" class="task-form">
           <div class="form-group">
             <label for="taskName">Task Name *</label>
@@ -202,6 +202,10 @@
         <div class="modal-header">
           <h2>Edit Task</h2>
           <button @click="showEditModal = false" class="close-btn">×</button>
+        </div>
+
+        <div v-if="tasksStore.error" class="alert alert-error">
+          {{ tasksStore.error }}
         </div>
 
         <form @submit.prevent="handleUpdateTask" class="task-form">
@@ -433,6 +437,7 @@ const getDefaultDueDate = () => {
 };
 
 const openCreateModal = () => {
+  tasksStore.error = null; // Clear any previous errors
   newTask.value.dueDate = getDefaultDueDate();
   showCreateModal.value = true;
 };
@@ -482,6 +487,7 @@ const handleCreateTask = async () => {
 };
 
 const handleEditTask = (task) => {
+  tasksStore.error = null; // Clear any previous errors
   // Find which custom lists contain this task
   const listsContainingTask = listsStore.lists
     .filter(list => !['Daily To-dos', 'Weekly To-dos', 'Monthly To-dos'].includes(list.name))

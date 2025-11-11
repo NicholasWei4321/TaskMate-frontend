@@ -60,9 +60,11 @@
       >
         Snooze
       </button>
+      <slot name="extra-actions"></slot>
     </div>
-    <div v-else class="task-completed-badge">
+    <div v-else class="task-actions">
       <span class="badge badge-success">✓ Completed</span>
+      <slot name="extra-actions"></slot>
     </div>
   </div>
 </template>

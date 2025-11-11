@@ -611,7 +611,7 @@
 ```
 ---
 
-### POST /api/ExternalAssignmentSync/_getSourcesForUser
+### POST /api/ExternalAssignmentSync/getSourcesForUser
 
 **Description:** Retrieves all external source accounts connected by a specific user.
 
@@ -652,7 +652,7 @@
 ```
 ---
 
-### POST /api/ExternalAssignmentSync/_getMappedInternalId
+### POST /api/ExternalAssignmentSync/getMappedInternalId
 
 **Description:** Retrieves the internal assignment ID corresponding to a given external assignment ID and source.
 
@@ -689,7 +689,7 @@
 ```
 ---
 
-### POST /api/ExternalAssignmentSync/_getAssignmentsForSource
+### POST /api/ExternalAssignmentSync/getAssignmentsForSource
 
 **Description:** Retrieves all external assignments currently synced for a specific external source account.
 

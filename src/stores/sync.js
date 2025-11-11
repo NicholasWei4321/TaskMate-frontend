@@ -8,11 +8,21 @@ import { useListsStore } from './lists';
 export const useSyncStore = defineStore('sync', {
   state: () => ({
     sources: [],
-    syncing: false,
+    syncingSourceId: null, // Track which source is currently syncing (null if none)
     loading: false,
     error: null,
     autoSyncInterval: null,
   }),
+
+  getters: {
+    // Computed getter for backwards compatibility
+    syncing: (state) => state.syncingSourceId !== null,
+    syncingSourceName: (state) => {
+      if (!state.syncingSourceId) return null;
+      const source = state.sources.find(s => s._id === state.syncingSourceId);
+      return source?.sourceName || null;
+    },
+  },
 
   actions: {
     async connectSource(sourceType, sourceName, details) {
@@ -66,7 +76,7 @@ export const useSyncStore = defineStore('sync', {
     },
 
     async syncSource(sourceAccountId) {
-      this.syncing = true;
+      this.syncingSourceId = sourceAccountId;
       this.error = null;
       const authStore = useAuthStore();
       const tasksStore = useTasksStore();
@@ -100,12 +110,15 @@ export const useSyncStore = defineStore('sync', {
         // Process each assignment
         for (const assignment of assignmentsToProcess) {
           if (assignment.existingInternalId) {
-            // Update existing task
+            // Update existing task - pass undefined for parameters we don't want to update
             await tasksStore.updateTask(
               assignment.existingInternalId,
               assignment.details.name,
               assignment.details.description,
-              assignment.details.dueDate
+              assignment.details.dueDate,
+              undefined, // newEffort
+              undefined, // newImportance
+              undefined  // newDifficulty
             );
           } else {
             // Create new task
@@ -158,7 +171,7 @@ export const useSyncStore = defineStore('sync', {
         this.error = error.message || 'Failed to sync source';
         return false;
       } finally {
-        this.syncing = false;
+        this.syncingSourceId = null;
       }
     },
 
@@ -166,6 +179,14 @@ export const useSyncStore = defineStore('sync', {
       this.loading = true;
       this.error = null;
       const authStore = useAuthStore();
+
+      // Don't fetch if user is not logged in
+      if (!authStore.user) {
+        this.loading = false;
+        this.sources = [];
+        return;
+      }
+
       try {
         const result = await syncAPI.getSourcesForUser(authStore.user);
         if (result.error) {

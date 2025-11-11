@@ -5,13 +5,13 @@
         <h1>External Assignment Sync</h1>
         <p class="text-muted">Connect and sync assignments from external platforms</p>
       </div>
-      <button @click="showConnectModal = true" class="btn btn-primary">
+      <button @click="openConnectModal" class="btn btn-primary">
         + Connect Source
       </button>
     </div>
 
-    <div v-if="syncStore.error" class="alert alert-error">
-      {{ syncStore.error }}
+    <div v-if="successMessage" class="alert alert-success">
+      {{ successMessage }}
     </div>
 
     <div v-if="syncStore.loading" class="loading-state">
@@ -25,7 +25,7 @@
       <p class="text-muted text-ui">
         Connect Canvas to automatically import assignments
       </p>
-      <button @click="showConnectModal = true" class="btn btn-primary">
+      <button @click="openConnectModal" class="btn btn-primary">
         Connect Your First Source
       </button>
     </div>
@@ -68,7 +68,7 @@
             class="btn btn-primary"
             :disabled="syncStore.syncing"
           >
-            <span v-if="syncStore.syncing" class="loading"></span>
+            <span v-if="syncStore.syncingSourceId === source._id" class="loading"></span>
             <span v-else>↻ Sync Now</span>
           </button>
           <button
@@ -88,6 +88,10 @@
         <div class="modal-header">
           <h2>Connect External Source</h2>
           <button @click="showConnectModal = false" class="close-btn">×</button>
+        </div>
+
+        <div v-if="syncStore.error" class="alert alert-error">
+          {{ syncStore.error }}
         </div>
 
         <form @submit.prevent="handleConnect" class="connect-form">
@@ -161,11 +165,35 @@
         <div class="sync-animation">
           <div class="sync-icon loading"></div>
         </div>
-        <h2 class="text-center">Syncing Assignments...</h2>
+        <h2 class="text-center">Syncing {{ syncStore.syncingSourceName || 'Source' }}...</h2>
         <p class="text-center text-muted">
           Please wait while we fetch and import your assignments.<br>
           This may take a while.
         </p>
+      </div>
+    </div>
+
+    <!-- Disconnect Confirmation Modal -->
+    <div v-if="showDisconnectModal" class="modal-overlay" @click="showDisconnectModal = false">
+      <div class="modal-content card" @click.stop>
+        <div class="modal-header">
+          <h2>Disconnect Source</h2>
+          <button @click="showDisconnectModal = false" class="close-btn">×</button>
+        </div>
+
+        <div class="modal-body">
+          <p>Are you sure you want to disconnect this source?</p>
+          <p class="text-muted text-sm">All synced assignment mappings will be removed.</p>
+        </div>
+
+        <div class="modal-actions">
+          <button @click="showDisconnectModal = false" class="btn btn-outline">
+            Cancel
+          </button>
+          <button @click="handleDisconnect" class="btn btn-danger">
+            Disconnect
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -178,6 +206,9 @@ import { useSyncStore } from '../stores/sync';
 const syncStore = useSyncStore();
 
 const showConnectModal = ref(false);
+const showDisconnectModal = ref(false);
+const sourceToDisconnect = ref(null);
+const successMessage = ref('');
 
 const newSource = ref({
   sourceType: '',
@@ -217,21 +248,35 @@ const getBaseUrl = (sourceType) => {
   return baseUrls[sourceType] || '';
 };
 
+const openConnectModal = () => {
+  syncStore.error = null; // Clear any previous errors
+  showConnectModal.value = true;
+};
+
 const handleConnect = async () => {
   // Automatically set the base URL based on the platform
   const baseUrl = getBaseUrl(newSource.value.sourceType);
 
+  // Store the values before closing the modal
+  const sourceType = newSource.value.sourceType;
+  const sourceName = newSource.value.sourceName;
+  const apiToken = newSource.value.details.apiToken;
+
+  // Close the modal immediately before connecting
+  // This prevents both the connect modal and sync progress modal from showing at the same time
+  showConnectModal.value = false;
+
   const result = await syncStore.connectSource(
-    newSource.value.sourceType,
-    newSource.value.sourceName,
+    sourceType,
+    sourceName,
     {
       baseUrl: baseUrl,
-      apiToken: newSource.value.details.apiToken,
+      apiToken: apiToken,
     }
   );
 
   if (result) {
-    showConnectModal.value = false;
+    // Reset the form after successful connection
     newSource.value = {
       sourceType: '',
       sourceName: '',
@@ -240,19 +285,36 @@ const handleConnect = async () => {
         apiToken: '',
       },
     };
+  } else {
+    // If there was an error, reopen the modal so user can see the error
+    showConnectModal.value = true;
   }
 };
 
 const handleSync = async (sourceId) => {
+  successMessage.value = ''; // Clear any previous success message
   const success = await syncStore.syncSource(sourceId);
   if (success) {
-    alert('Sync completed successfully!');
+    successMessage.value = 'Sync completed successfully!';
+    // Auto-clear the success message after 5 seconds
+    setTimeout(() => {
+      successMessage.value = '';
+    }, 5000);
   }
 };
 
-const confirmDisconnect = async (sourceId) => {
-  if (confirm('Are you sure you want to disconnect this source? All synced assignment mappings will be removed.')) {
-    await syncStore.disconnectSource(sourceId);
+const confirmDisconnect = (sourceId) => {
+  sourceToDisconnect.value = sourceId;
+  showDisconnectModal.value = true;
+};
+
+const handleDisconnect = async () => {
+  if (sourceToDisconnect.value) {
+    const success = await syncStore.disconnectSource(sourceToDisconnect.value);
+    // Only close the modal after the disconnect is complete
+    showDisconnectModal.value = false;
+    sourceToDisconnect.value = null;
+    // Note: disconnectSource already calls fetchSources, so no need to call it again
   }
 };
 
@@ -470,6 +532,15 @@ onMounted(async () => {
 .help-content ol {
   margin-left: var(--spacing-lg);
   line-height: var(--line-height-relaxed);
+}
+
+.modal-body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  margin-bottom: var(--spacing-lg);
+}
+
+.modal-body p {
+  margin-bottom: var(--spacing-sm);
 }
 
 .modal-actions {

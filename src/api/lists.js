@@ -18,7 +18,7 @@ export const listsAPI = {
     const response = await apiClient.post('/TodoList/addListItem', {
       list,
       item,
-      itemDueDate: itemDueDate ? new Date(itemDueDate).toISOString() : undefined,
+      itemDueDate: itemDueDate ? (typeof itemDueDate === 'string' ? itemDueDate : new Date(itemDueDate).toISOString()) : undefined,
     });
     return response.data;
   },

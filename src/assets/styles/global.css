@@ -184,6 +184,16 @@ textarea::placeholder {
   background-color: var(--color-primary-lighter);
 }
 
+.btn-outline-danger {
+  background-color: transparent;
+  border: 2px solid var(--color-error);
+  color: var(--color-error);
+}
+
+.btn-outline-danger:hover:not(:disabled) {
+  background-color: var(--color-error-light);
+}
+
 .btn-success {
   background-color: var(--color-success);
   color: var(--color-white);
